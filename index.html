@@ -90,7 +90,7 @@
   { "id": "linkedin", "label": "LinkedIn", "url": "https://www.linkedin.com/in/m4ch77", "status": "live", "desc": "이력과 네트워크",      "desc_en": "career and network" },
   { "id": "x",        "label": "X",        "url": "https://x.com/m4ch77",               "status": "live", "desc": "짧은 기록과 잡담",     "desc_en": "short notes and chatter" },
   { "id": "resume",   "label": "레쥬메",   "label_en": "Resume", "url": "https://resume.m4ch77.com", "status": "soon", "desc": "경력과 작업 기록", "desc_en": "career and work log" },
-  { "id": "blog",     "label": "블로그",   "label_en": "Blog",   "url": "https://blog.m4ch77.com",   "status": "soon", "desc": "글과 기록",       "desc_en": "writing and notes" }
+  { "id": "writing",  "label": "글",       "label_en": "Writing", "url": "/writing",                "status": "live", "desc": "쓴 글 전체",     "desc_en": "all posts" }
 ]
 </script>
 
@@ -284,7 +284,7 @@
     <div class="ticker-track" id="ticker-track">
       <span class="ticker-item" data-en="personal hub">개인 허브</span><span class="ticker-sep">/</span>
       <span class="ticker-item" data-en="sorting out subdomains">서브도메인 정리 중</span><span class="ticker-sep">/</span>
-      <span class="ticker-item" data-en="blog coming soon">블로그 준비 중</span><span class="ticker-sep">/</span>
+      <span class="ticker-item" data-en="writing at /writing">글은 /writing 에</span><span class="ticker-sep">/</span>
       <span class="ticker-item" data-en="open to collaborate">협업 문의 환영</span><span class="ticker-sep">/</span>
       <span class="ticker-item">Seoul, KR</span><span class="ticker-sep">/</span>
     </div>
@@ -374,110 +374,58 @@
 
       <div class="carousel" id="blog-carousel">
         <ul class="carousel-track" id="blog-track" tabindex="0" aria-label="블로그 글 목록 (가로 스크롤)" data-en-label="Blog posts (horizontal scroll)">
+        <!-- build:posts:start -->
 
           <li class="bcard" data-reveal>
-            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+            <a class="bcard-hit" href="/writing/build-without-runtime-deps" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
                 <img src="assets/cover-01.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
-                <span class="bcard-badge" data-en="Soon">준비 중</span>
               </span>
               <span class="bcard-body">
-                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="7 min">7분</span></span>
-                <span class="bcard-title" data-en="Scroll motion without a library">라이브러리 없이 만든 스크롤 모션</span>
-                <span class="bcard-excerpt" data-en="How far IntersectionObserver and rAF alone can go, and where to stop.">IntersectionObserver와 rAF만으로 어디까지 되는지, 그리고 어디서 멈춰야 하는지.</span>
-                <span class="bcard-tags"><span class="tag">#frontend</span><span class="tag">#motion</span></span>
+                <span class="bcard-meta"><span class="bcard-date">2026.08.05</span><i>·</i><span>4<span data-en="min">분</span></span></span>
+                <span class="bcard-title">빌드는 두고, 런타임 의존성은 0으로</span>
+                <span class="bcard-excerpt">마크다운을 쓰려면 빌드가 필요합니다. 그렇다고 방문자가 파서를 내려받을 이유는 없습니다.</span>
+                <span class="wr-tags"><span class="tag">#static</span><span class="tag">#tooling</span></span>
               </span>
             </a>
           </li>
-
           <li class="bcard" data-reveal>
-            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+            <a class="bcard-hit" href="/writing/scroll-motion" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
                 <img src="assets/cover-02.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
-                <span class="bcard-badge" data-en="Soon">준비 중</span>
               </span>
               <span class="bcard-body">
-                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="5 min">5분</span></span>
-                <span class="bcard-title" data-en="Splitting a site into subdomains">서브도메인으로 사이트 쪼개기</span>
-                <span class="bcard-excerpt" data-en="Why the main site keeps only the door, and how the rest is deployed.">메인은 입구만 남기고 나머지를 각자의 자리로 보낸 이유와 배포 구조.</span>
-                <span class="bcard-tags"><span class="tag">#infra</span><span class="tag">#dns</span></span>
+                <span class="bcard-meta"><span class="bcard-date">2026.08.01</span><i>·</i><span>5<span data-en="min">분</span></span></span>
+                <span class="bcard-title">라이브러리 없이 만든 스크롤 모션</span>
+                <span class="bcard-excerpt">IntersectionObserver 와 rAF 만으로 어디까지 되는지, 그리고 어디서 멈춰야 하는지.</span>
+                <span class="wr-tags"><span class="tag">#frontend</span><span class="tag">#motion</span></span>
               </span>
             </a>
           </li>
-
           <li class="bcard" data-reveal>
-            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+            <a class="bcard-hit" href="/writing/two-surfaces" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
                 <img src="assets/cover-03.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
-                <span class="bcard-badge" data-en="Soon">준비 중</span>
               </span>
               <span class="bcard-body">
-                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="9 min">9분</span></span>
-                <span class="bcard-title" data-en="Faking a terminal on the web">웹에서 터미널 흉내내기</span>
-                <span class="bcard-excerpt" data-en="What it takes to build navigation that is actually used, not decoration.">장식용이 아니라 실제로 쓰이는 내비게이션을 만들 때 필요한 것들.</span>
-                <span class="bcard-tags"><span class="tag">#ux</span><span class="tag">#a11y</span></span>
+                <span class="bcard-meta"><span class="bcard-date">2026.07.26</span><i>·</i><span>4<span data-en="min">분</span></span></span>
+                <span class="bcard-title">두 개의 서피스로 만드는 다크 모드</span>
+                <span class="bcard-excerpt">색을 반전하는 대신 표면 단계만 바꾸면 생기는 것들. 토큰 설계 기록.</span>
+                <span class="wr-tags"><span class="tag">#css</span><span class="tag">#design</span></span>
               </span>
             </a>
           </li>
 
-          <li class="bcard" data-reveal>
-            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
-              <span class="bcard-media">
-                <img src="assets/cover-04.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
-                <span class="bcard-badge" data-en="Soon">준비 중</span>
-              </span>
-              <span class="bcard-body">
-                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="6 min">6분</span></span>
-                <span class="bcard-title" data-en="Dark mode with two surfaces">두 개의 서피스로 만드는 다크 모드</span>
-                <span class="bcard-excerpt" data-en="What changes when you shift surface levels instead of inverting colors.">색을 반전하는 대신 표면 단계만 바꾸면 생기는 것들. 토큰 설계 기록.</span>
-                <span class="bcard-tags"><span class="tag">#css</span><span class="tag">#design</span></span>
-              </span>
-            </a>
-          </li>
-
-          <li class="bcard" data-reveal>
-            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
-              <span class="bcard-media">
-                <img src="assets/cover-05.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
-                <span class="bcard-badge" data-en="Soon">준비 중</span>
-              </span>
-              <span class="bcard-body">
-                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="4 min">4분</span></span>
-                <span class="bcard-title" data-en="A custom cursor that stays out of the way">커스텀 커서를 방해되지 않게</span>
-                <span class="bcard-excerpt" data-en="Between a cool cursor and a usable one. How many states are too many?">멋있는 커서와 쓸 수 있는 커서 사이. 상태를 몇 개까지 두는 게 좋을까.</span>
-                <span class="bcard-tags"><span class="tag">#interaction</span></span>
-              </span>
-            </a>
-          </li>
-
-          <li class="bcard" data-reveal>
-            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
-              <span class="bcard-media">
-                <img src="assets/cover-06.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
-                <span class="bcard-badge" data-en="Soon">준비 중</span>
-              </span>
-              <span class="bcard-body">
-                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="8 min">8분</span></span>
-                <span class="bcard-title" data-en="Keeping a build-free site alive">빌드 없는 사이트를 유지하는 법</span>
-                <span class="bcard-excerpt" data-en="Living with zero dependencies. Where it helps, and where you give in.">의존성 0으로 버티기. 편해지는 지점과 결국 포기하게 되는 지점.</span>
-                <span class="bcard-tags"><span class="tag">#static</span><span class="tag">#tooling</span></span>
-              </span>
-            </a>
-          </li>
-
-          <!-- 마지막 칸은 블로그로 넘어가는 문입니다 -->
           <li class="bcard bcard-more" data-reveal>
-            <a class="bcard-hit" href="https://blog.m4ch77.com" rel="noopener" target="_blank"
-               data-cursor-label="블로그" data-cursor-label-en="Blog" data-cursor-box>
+            <a class="bcard-hit" href="/writing" data-cursor-label="목록" data-cursor-label-en="Index" data-cursor-box>
               <span class="bcard-more-icon" aria-hidden="true">
                 <svg viewBox="0 0 16 16"><path d="M4 12 12 4M6 4h6v6"/></svg>
               </span>
               <span class="bcard-more-title" data-en="Read all posts">글 전체 보기</span>
-              <span class="bcard-more-sub">blog.m4ch77.com</span>
-              <span class="tag" data-en="Soon">준비 중</span>
+              <span class="bcard-more-sub">m4ch77.com/writing</span>
             </a>
           </li>
-
+          <!-- build:posts:end -->
         </ul>
 
         <div class="carousel-foot">
@@ -584,8 +532,8 @@
           <div class="faq-body"><p data-en="From the German word for power, and from Mach.">독일어로 '힘'을 뜻하는 말, 그리고 마하(Mach)에서 왔습니다.</p></div>
         </details>
         <details class="faq-item" data-reveal>
-          <summary><span data-en="When do the resume and blog open?">레쥬메와 블로그는 언제 열리나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
-          <div class="faq-body"><p data-en-html="The resume first, then the blog. They will live at <span class=&quot;mono&quot;>resume.m4ch77.com</span> and <span class=&quot;mono&quot;>blog.m4ch77.com</span>.">레쥬메가 먼저, 그다음이 블로그입니다. 각각 <span class="mono">resume.m4ch77.com</span> 와 <span class="mono">blog.m4ch77.com</span> 로 나갑니다.</p></div>
+          <summary><span data-en="Where are the posts, and when does the resume open?">글은 어디 있고, 레쥬메는 언제 열리나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
+          <div class="faq-body"><p data-en-html="Posts are already up at <span class=&quot;mono&quot;>/writing</span>. The resume comes next, at <span class=&quot;mono&quot;>resume.m4ch77.com</span>.">글은 이미 <span class="mono">/writing</span> 에 있습니다. 레쥬메가 그다음이고 <span class="mono">resume.m4ch77.com</span> 로 나갑니다.</p></div>
         </details>
         <details class="faq-item" data-reveal>
           <summary><span data-en="Is the source of this site public?">이 사이트 소스는 공개되어 있나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>

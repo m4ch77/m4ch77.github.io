@@ -221,7 +221,9 @@
   /* ══ 03 인트로 로더 ════════════════════════════════════ */
   (function loader() {
     var el = $("#loader");
-    if (!el) return;
+    // 로더가 없는 페이지(글 목록 · 글 본문)도 준비 신호는 보내야 합니다.
+    // 이걸 빼면 whenReady 가 걸린 등장 애니메이션이 영원히 시작되지 않습니다.
+    if (!el) { markReady(); return; }
 
     var skip = root.classList.contains("no-loader") || reduceMotion;
     if (skip) {
@@ -2563,6 +2565,81 @@
         try { window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }
         catch (e) { window.scrollTo(0, 0); }
       });
+    }
+  })();
+
+  /* ══ 19 글 목록 태그 필터 ═══════════════════════════════
+     /writing 에서만 씁니다. 목록이 없으면 조용히 빠집니다.
+     줄어드는 목록이라 높이를 먼저 잠가 둡니다. 잠그지 않으면 걸러낼
+     때마다 페이지가 짧아지면서 화면이 위로 끌려갑니다. */
+  (function writingFilter() {
+    var list = $("#wr-list");
+    if (!list) return;
+
+    var chips = $$(".wr-chip");
+    if (!chips.length) return;
+
+    var items = $$(".wr-item", list);
+    var shown = $("#wr-shown");
+    var empty = $("#wr-empty");
+
+    // 처음 높이를 최소 높이로 잠급니다 (design.md 6절).
+    var locked = 0;
+    function lock() {
+      var h = list.getBoundingClientRect().height;
+      if (h > locked) {
+        locked = h;
+        list.style.minHeight = Math.round(h) + "px";
+      }
+    }
+
+    function apply(tag, quiet) {
+      var n = 0;
+      items.forEach(function (li) {
+        var tags = (li.getAttribute("data-tags") || "").split(/\s+/);
+        var on = !tag || tags.indexOf(tag) !== -1;
+        li.hidden = !on;
+        if (on) n++;
+      });
+
+      chips.forEach(function (c) {
+        var mine = (c.getAttribute("data-tag") || "") === tag;
+        c.classList.toggle("is-on", mine);
+        if (mine) c.setAttribute("aria-current", "true");
+        else c.removeAttribute("aria-current");
+      });
+
+      if (shown) shown.textContent = String(n);
+      if (empty) empty.hidden = n !== 0;
+
+      // 레이아웃이 바뀌는 순간에는 헤더 판단을 잠시 멈춥니다.
+      quietHeader(600);
+
+      if (!quiet) {
+        var url = tag
+          ? location.pathname + "?tag=" + encodeURIComponent(tag)
+          : location.pathname;
+        try { history.replaceState(null, "", url); } catch (e) {}
+      }
+    }
+
+    chips.forEach(function (c) {
+      c.addEventListener("click", function () {
+        lock();
+        apply(c.getAttribute("data-tag") || "");
+      });
+    });
+
+    // 주소에 ?tag= 가 있으면 그대로 걸러진 상태로 엽니다.
+    var initial = "";
+    try {
+      initial = new URLSearchParams(location.search).get("tag") || "";
+    } catch (e) {}
+
+    if (initial && chips.some(function (c) { return c.getAttribute("data-tag") === initial; })) {
+      whenReady(function () { lock(); apply(initial, true); });
+    } else {
+      whenReady(lock);
     }
   })();
 })();

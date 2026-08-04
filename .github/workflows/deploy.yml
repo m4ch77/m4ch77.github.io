@@ -33,6 +33,20 @@ jobs:
       - name: 체크아웃
         uses: actions/checkout@v7
 
+      - name: Node 준비
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: 빌드 도구 설치
+        run: npm ci
+
+      - name: 글 빌드 (마크다운 → HTML)
+        # content/writing/*.md → writing/<이름>/index.html
+        # 수식과 코드 강조를 여기서 끝냅니다. 방문자에게는 HTML 만 갑니다.
+        run: npm run build
+
       - name: 산출물 모으기
         run: |
           set -euo pipefail
@@ -42,20 +56,23 @@ jobs:
           mkdir -p _site
 
           # 올릴 것만 고릅니다 (허용 목록).
-          # deploy/ · design.md · secret/ 처럼 저장소에만 두는 파일은
-          # 목록에 없으므로 구조적으로 올라갈 수 없습니다.
+          # deploy/ · design.md · secret/ · content/ · build/ 처럼
+          # 저장소에만 두는 것은 목록에 없으므로 구조적으로 올라갈 수 없습니다.
           for f in *.html *.css *.js *.svg *.txt *.webmanifest; do
             cp -v "$f" _site/
           done
 
-          for d in assets .well-known; do
+          # writing/ 은 위 빌드가 만든 결과입니다.
+          for d in assets .well-known writing; do
             if [ -d "$d" ]; then
-              cp -Rv "$d" _site/
+              cp -Rv "$d" _site/ > /dev/null
+              echo "  디렉터리 $d"
             fi
           done
 
           echo "── _site 내용 ──"
-          find _site -type f | sort
+          find _site -type f -not -path '*/katex/fonts/*' | sort
+          echo "  (katex 폰트 $(find _site -path '*/katex/fonts/*' -type f | wc -l | tr -d ' ')개는 생략)"
 
       - name: 비밀 값 유출 검사
         run: |
@@ -96,17 +113,27 @@ jobs:
       - name: 참조 자원 확인
         run: |
           set -euo pipefail
-          # index.html 이 가리키는 로컬 파일이 실제로 있는지 봅니다.
-          # 자원 이름을 고치고 한쪽만 바꿨을 때를 잡습니다.
+          # 모든 HTML 이 가리키는 로컬 파일이 실제로 있는지 봅니다.
+          # 글 본문은 ../../theme.css 처럼 자기 위치를 기준으로 가리키므로
+          # 페이지가 놓인 디렉터리에서 경로를 풉니다.
           node - <<'JS'
           const fs = require('fs');
           const path = require('path');
 
           const root = '_site';
-          let missing = [];
+          const pages = [];
+          (function walk(dir) {
+            for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, e.name);
+              if (e.isDirectory()) walk(p);
+              else if (e.name.endsWith('.html')) pages.push(p);
+            }
+          })(root);
 
-          for (const page of fs.readdirSync(root).filter(f => f.endsWith('.html'))) {
-            const html = fs.readFileSync(path.join(root, page), 'utf8');
+          const missing = [];
+
+          for (const page of pages) {
+            const html = fs.readFileSync(page, 'utf8');
             const refs = [...html.matchAll(/(?:src|href)\s*=\s*["']([^"']+)["']/g)]
               .map(m => m[1])
               // 외부 · 앵커 · 데이터 URI · mailto 는 검사 대상이 아닙니다
@@ -115,8 +142,19 @@ jobs:
             for (const ref of new Set(refs)) {
               const rel = ref.split(/[?#]/)[0];
               if (!rel) continue;
-              const target = path.join(root, rel.replace(/^\//, ''));
-              if (!fs.existsSync(target)) missing.push(`${page} → ${ref}`);
+
+              // 루트 절대 경로는 _site 기준, 그 밖은 페이지 위치 기준
+              const base = rel.startsWith('/') ? root : path.dirname(page);
+              const target = path.join(base, rel.replace(/^\//, ''));
+
+              // 확장자가 없으면 디렉터리 + index.html 로 봅니다 (/writing/이름)
+              const ok = fs.existsSync(target)
+                ? (fs.statSync(target).isDirectory()
+                    ? fs.existsSync(path.join(target, 'index.html'))
+                    : true)
+                : false;
+
+              if (!ok) missing.push(`${path.relative(root, page)} → ${ref}`);
             }
           }
 
@@ -125,7 +163,7 @@ jobs:
             for (const m of missing) console.error('  ' + m);
             process.exit(1);
           }
-          console.log('통과: 모든 로컬 참조가 존재합니다');
+          console.log(`통과: HTML ${pages.length}개의 로컬 참조가 모두 존재합니다`);
           JS
 
       - name: 아티팩트 업로드

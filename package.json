@@ -1,0 +1,23 @@
+{
+  "name": "m4ch77-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "m4ch77 개인 허브 + 글(writing) 정적 빌드",
+  "scripts": {
+    "build": "node build/build.mjs",
+    "clean": "rm -rf writing _site"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "//": "여기 있는 것은 모두 빌드 시점에만 씁니다. 방문자에게 내려가는 것은 HTML·CSS 뿐이고 런타임 의존성은 0 입니다.",
+  "devDependencies": {
+    "@vscode/markdown-it-katex": "1.1.2",
+    "gray-matter": "4.0.3",
+    "markdown-it": "15.0.0",
+    "markdown-it-anchor": "9.2.1",
+    "markdown-it-footnote": "4.0.0",
+    "shiki": "4.4.1"
+  }
+}
