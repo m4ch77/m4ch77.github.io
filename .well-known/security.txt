@@ -1,0 +1,4 @@
+Contact: mailto:m4ch77@gmail.com
+Expires: 2027-08-01T00:00:00.000Z
+Preferred-Languages: ko, en
+Canonical: https://m4ch77.com/.well-known/security.txt

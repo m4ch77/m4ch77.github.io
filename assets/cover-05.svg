@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-label="">
+  <defs>
+    <radialGradient id="g5" cx=".62" cy=".38" r=".7">
+      <stop offset="0" stop-color="#1d2330"/>
+      <stop offset="1" stop-color="#090b0f"/>
+    </radialGradient>
+  </defs>
+  <rect width="960" height="600" fill="url(#g5)"/>
+  <g fill="#e6e8ee" fill-opacity=".14">
+    <circle cx="120" cy="500" r="2"/><circle cx="200" cy="470" r="2"/><circle cx="280" cy="436" r="2"/>
+    <circle cx="356" cy="398" r="2"/><circle cx="428" cy="356" r="2"/><circle cx="494" cy="316" r="2"/>
+  </g>
+  <g fill="none" stroke="#7aa2ff">
+    <circle cx="596" cy="256" r="26" stroke-width="2"/>
+    <circle cx="596" cy="256" r="58" stroke-width="1" stroke-opacity=".55"/>
+    <circle cx="596" cy="256" r="96" stroke-width="1" stroke-opacity=".28"/>
+  </g>
+  <circle cx="596" cy="256" r="6" fill="#7aa2ff"/>
+  <rect x="640" y="240" width="150" height="32" rx="16" fill="#7aa2ff" fill-opacity=".14" stroke="#7aa2ff" stroke-opacity=".5"/>
+  <rect x="80" y="80" width="120" height="2" fill="#e6e8ee" fill-opacity=".2"/>
+</svg>

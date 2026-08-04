@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>m4ch77</title>
+<meta name="description" content="m4ch77의 개인 허브. 약력, 글, 그리고 매일의 기록."
+      data-en="Personal hub of m4ch77. Career, writing, and daily notes.">
+<meta name="author" content="m4ch77">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a0b0d">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="m4ch77">
+<meta property="og:description" content="m4ch77의 개인 허브.">
+<meta property="og:url" content="https://m4ch77.com/">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://m4ch77.com/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@200;300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<!-- 토큰(공용) → 이 사이트의 스타일 순서로 불러옵니다 -->
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="styles.css">
+
+<script>
+  (function () {
+    var r = document.documentElement;
+    r.classList.add("js");
+    try {
+      var saved = localStorage.getItem("m4ch77-theme");
+      if (saved) r.dataset.theme = saved;
+    } catch (e) {}
+    try {
+      if (sessionStorage.getItem("m4ch77-seen")) r.classList.add("no-loader");
+    } catch (e) {}
+    // 언어는 저장값이 있으면 그것, 없으면 브라우저 선호 언어를 봅니다.
+    // 한국어면 한국어, 그 밖의 모든 경우는 영어입니다.
+    try {
+      var lang = localStorage.getItem("m4ch77-lang");
+      if (lang !== "ko" && lang !== "en") {
+        var list = navigator.languages && navigator.languages.length
+          ? navigator.languages : [navigator.language || "en"];
+        lang = "en";
+        for (var i = 0; i < list.length; i++) {
+          if (/^ko\b/i.test(list[i])) { lang = "ko"; break; }
+        }
+      }
+      r.setAttribute("lang", lang);
+      r.setAttribute("data-lang", lang);
+    } catch (e) {
+      r.setAttribute("data-lang", "ko");
+    }
+  })();
+</script>
+</head>
+
+<body>
+<a class="skip-link" href="#main" data-en="Skip to content">본문으로 건너뛰기</a>
+
+<!-- ── 브랜드 로고 심볼 (한 번 정의하고 재사용) ─────────── -->
+<svg class="svg-defs" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-github" viewBox="0 0 16 16">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+    </symbol>
+    <symbol id="i-mail" viewBox="0 0 16 16">
+      <path d="M1.5 3h13a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm.4 1.6L8 8.9l6.1-4.3H1.9z"/>
+    </symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 2.063-2.065 2.064 2.064 0 0 1-2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ── 목적지 목록 ───────────────────────────────────────
+     터미널 ls / open, 빠른 이동이 함께 쓰는 단일 출처입니다. -->
+<script type="application/json" id="destinations">
+[
+  { "id": "github",   "label": "GitHub",   "url": "https://github.com/m4ch77",          "status": "live", "desc": "코드와 실험들",        "desc_en": "code and experiments" },
+  { "id": "mail",     "label": "Email",    "url": "mailto:m4ch77@gmail.com",            "status": "live", "desc": "가장 확실한 연락 방법", "desc_en": "the surest way to reach me" },
+  { "id": "linkedin", "label": "LinkedIn", "url": "https://www.linkedin.com/in/m4ch77", "status": "live", "desc": "이력과 네트워크",      "desc_en": "career and network" },
+  { "id": "x",        "label": "X",        "url": "https://x.com/m4ch77",               "status": "live", "desc": "짧은 기록과 잡담",     "desc_en": "short notes and chatter" },
+  { "id": "resume",   "label": "레쥬메",   "label_en": "Resume", "url": "https://resume.m4ch77.com", "status": "soon", "desc": "경력과 작업 기록", "desc_en": "career and work log" },
+  { "id": "blog",     "label": "블로그",   "label_en": "Blog",   "url": "https://blog.m4ch77.com",   "status": "soon", "desc": "글과 기록",       "desc_en": "writing and notes" }
+]
+</script>
+
+<!-- ── 인트로 로더 ─── 글자가 뒤섞이다 닉네임으로 굳습니다 ── -->
+<div class="loader" id="loader" data-surface="1" aria-hidden="true">
+  <div class="loader-inner">
+    <span class="loader-mark" id="loader-mark">------</span>
+    <span class="loader-bar"><i id="loader-fill"></i></span>
+    <span class="loader-count" id="loader-count">00</span>
+  </div>
+</div>
+
+<!-- ── 커스텀 커서 ─────────────────────────────────────────
+     점·링만 반전(blend)으로 그립니다. 카드에 달라붙는 테두리는
+     크기가 커서 blend 비용이 크므로 따로 두고 서피스 색을 씁니다. -->
+<div class="cursor" id="cursor" aria-hidden="true">
+  <span class="cursor-ring" id="cursor-ring"></span>
+  <span class="cursor-dot" id="cursor-dot"></span>
+</div>
+<div class="cursor-frame" id="cursor-frame" data-surface="1" aria-hidden="true"></div>
+<div class="cursor-label" id="cursor-label" data-surface="1" aria-hidden="true"></div>
+
+<!-- ── 배경 레이어 ─────────────────────────────────────── -->
+<canvas id="bg-field" class="bg-field" aria-hidden="true"></canvas>
+<div class="bg-grain" aria-hidden="true"></div>
+
+<!-- ── 빠른 이동 (커맨드 팔레트) ────────────────────────── -->
+<div class="palette" id="palette" hidden>
+  <div class="palette-scrim" id="palette-scrim"></div>
+  <div class="palette-panel" role="dialog" aria-modal="true" aria-label="빠른 이동" data-en-label="Jump to" data-surface="1">
+    <div class="palette-head">
+      <svg class="palette-sign" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+      <input id="palette-input" class="palette-input" type="text"
+             placeholder="어디로 갈까요? 섹션 · 링크 · 명령어"
+             data-en-ph="Where to? Sections · links · commands"
+             autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true"
+             aria-controls="palette-list" aria-autocomplete="list">
+      <span class="palette-count" id="palette-count"></span>
+      <button class="palette-close" id="palette-close" type="button" aria-label="닫기" data-en-label="Close">esc</button>
+    </div>
+    <ul class="palette-list" id="palette-list" role="listbox" aria-label="결과" data-en-label="Results"></ul>
+    <p class="palette-foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd> <span data-en="move">이동</span></span>
+      <span><kbd>Enter</kbd> <span data-en="select">선택</span></span>
+      <span><kbd>⌥</kbd><kbd>↵</kbd> <span data-en="new tab">새 탭</span></span>
+      <span class="palette-foot-end"><kbd>Esc</kbd> <span data-en="close">닫기</span></span>
+    </p>
+  </div>
+</div>
+
+<!-- ── 섹션 인덱스 (오른쪽 점 내비) ─────────────────────── -->
+<nav class="dotnav" id="dotnav" data-surface="1" aria-label="섹션 바로가기" data-en-label="Jump to section"></nav>
+
+<!-- ── 헤더 ────────────────────────────────────────────── -->
+<header class="header" id="header" data-surface="1">
+  <div class="shell header-inner">
+    <a class="brand" href="#top" data-cursor-label="위로" data-cursor-label-en="Top">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text" data-scramble="m4ch77">m4ch77</span>
+    </a>
+
+    <nav class="header-nav" aria-label="섹션" data-en-label="Sections">
+      <a href="#timeline" data-en="Career">약력</a>
+      <a href="#blog" data-en="Blog">블로그</a>
+      <a href="#til">TIL</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact" data-en="Contact">연락</a>
+    </nav>
+
+    <div class="header-right">
+      <button class="kbd-btn" id="palette-open" type="button" aria-label="빠른 이동 열기" data-en-label="Open jump to">
+        <span class="kbd-btn-text" data-en="Jump to">빠른 이동</span>
+        <kbd>⌘</kbd><kbd>K</kbd>
+      </button>
+      <button class="lang-btn" id="lang-toggle" type="button" aria-label="언어 바꾸기" data-en-label="Change language">
+        <span id="lang-current">KO</span>
+      </button>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="테마 반전" data-en-label="Toggle theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="scroll-progress" aria-hidden="true"><span id="progress-bar"></span></div>
+</header>
+
+<main id="main">
+
+  <!-- ══ 01 · HERO — 왼쪽 소개 / 오른쪽 터미널 ═══════════ -->
+  <section class="hero" id="top" data-surface="1" data-section="시작" data-section-en="Start">
+    <div class="shell">
+      <div class="hero-grid">
+
+        <div class="hero-copy">
+          <p class="hero-eyebrow" data-reveal>
+            <span class="avail"><span class="avail-dot"></span><span data-en="Open to work">협업 가능</span></span>
+            <span class="hero-meta-item">Seoul, KR</span>
+            <span class="hero-meta-item"><span id="clock">--:--:--</span> KST</span>
+          </p>
+
+          <h1 class="hero-display" data-split="words">
+            Hello, I'm<br>
+            <span class="hero-name" data-nosplit data-jackpot="m4ch77">m4ch77</span>
+          </h1>
+
+          <p class="hero-lede" data-reveal
+             data-en="I like making things. Korea University alum. This site is the door to everything of mine.">
+            만드는 걸 좋아합니다. 고려대학교를 나왔습니다.
+            이 사이트는 제 모든 것으로 이어지는 입구입니다.
+          </p>
+
+          <div class="hero-actions" data-reveal>
+            <a class="btn btn-solid" href="#timeline" data-magnet data-cursor-label="보기" data-cursor-label-en="Look">
+              <span data-en="Take a look">둘러보기</span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg>
+            </a>
+            <button class="btn btn-line" id="hero-term-focus" type="button" data-magnet data-cursor-label="입력" data-cursor-label-en="Type">
+              <span data-en="Use terminal">터미널로</span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 5.5 6 8l-2.5 2.5M8 11h4.5"/></svg>
+            </button>
+          </div>
+
+          <ul class="hero-links" data-reveal>
+            <li>
+              <a class="hlink" href="https://github.com/m4ch77" rel="me noopener" target="_blank">
+                <svg class="hlink-logo" aria-hidden="true"><use href="#i-github"></use></svg>
+                <span>GitHub</span>
+              </a>
+            </li>
+            <li>
+              <a class="hlink" href="mailto:m4ch77@gmail.com">
+                <svg class="hlink-logo" aria-hidden="true"><use href="#i-mail"></use></svg>
+                <span>Email</span>
+              </a>
+            </li>
+            <li>
+              <a class="hlink" href="https://www.linkedin.com/in/m4ch77" rel="me noopener" target="_blank">
+                <svg class="hlink-logo" aria-hidden="true"><use href="#i-linkedin"></use></svg>
+                <span>LinkedIn</span>
+              </a>
+            </li>
+            <li>
+              <a class="hlink" href="https://x.com/m4ch77" rel="me noopener" target="_blank">
+                <svg class="hlink-logo" aria-hidden="true"><use href="#i-x"></use></svg>
+                <span>X</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 오른쪽 터미널 -->
+        <div class="hero-term" data-reveal>
+          <div class="term" id="term">
+            <div class="term-bar">
+              <span class="tdot tdot-a"></span><span class="tdot"></span><span class="tdot"></span>
+              <span class="term-title">visitor@m4ch77 — zsh</span>
+              <button class="term-clear" type="button" id="term-clear" aria-label="터미널 지우기" data-en-label="Clear terminal">clear</button>
+            </div>
+
+            <div class="term-screen" id="term-screen">
+              <div class="term-out" id="term-out" role="log" aria-live="polite" aria-label="터미널 출력" data-en-label="Terminal output"></div>
+              <form class="term-line" id="term-form" autocomplete="off">
+                <label class="term-prompt" for="term-input">
+                  <span class="p-user">visitor</span><span class="p-at">@</span><span class="p-host">m4ch77</span><span class="p-path">:~</span><span class="p-sign">$</span>
+                </label>
+                <input class="term-input" id="term-input" type="text" name="cmd"
+                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                       aria-label="명령어 입력" data-en-label="Command input" aria-describedby="term-hint">
+              </form>
+            </div>
+
+            <p class="term-hint" id="term-hint"
+               data-en-html="<code>help</code> · Tab to complete · <kbd>↑</kbd><kbd>↓</kbd> history">
+              <code>help</code> · Tab 자동완성 · <kbd>↑</kbd><kbd>↓</kbd> 기록
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="hero-wordmark" aria-hidden="true" data-parallax="0.1">m4ch77</div>
+
+    <a class="scroll-cue" href="#timeline" aria-label="아래로 스크롤" data-en-label="Scroll down">
+      <span class="scroll-cue-line"></span>
+      <span class="scroll-cue-text">SCROLL</span>
+    </a>
+  </section>
+
+  <!-- ══ 02 · TICKER ═════════════════════════════════════ -->
+  <div class="ticker" data-surface="1" aria-hidden="true">
+    <div class="ticker-track" id="ticker-track">
+      <span class="ticker-item" data-en="personal hub">개인 허브</span><span class="ticker-sep">/</span>
+      <span class="ticker-item" data-en="sorting out subdomains">서브도메인 정리 중</span><span class="ticker-sep">/</span>
+      <span class="ticker-item" data-en="blog coming soon">블로그 준비 중</span><span class="ticker-sep">/</span>
+      <span class="ticker-item" data-en="open to collaborate">협업 문의 환영</span><span class="ticker-sep">/</span>
+      <span class="ticker-item">Seoul, KR</span><span class="ticker-sep">/</span>
+    </div>
+  </div>
+
+  <!-- ══ 03 · TIMELINE + LOG ═════════════════════════════ -->
+  <section class="section" id="timeline" data-surface="2" data-section="약력" data-section-en="Career">
+    <div class="shell">
+      <div class="sec-head">
+        <div>
+          <p class="section-kicker" data-reveal><span class="num">01</span> <span data-en="Career">약력</span></p>
+          <h2 class="section-title" data-split="chars" data-flow>Where I've <span class="thin">Been</span></h2>
+        </div>
+        <p class="section-tagline" data-reveal data-en="Where I have been, and what I have done.">지나온 자리와 기록입니다.</p>
+      </div>
+
+      <div class="tl-grid">
+        <ol class="timeline" data-flow>
+          <li data-reveal>
+            <span class="tl-year">2026</span>
+            <span class="tl-body">
+              <span class="tl-title" data-en="Personal site · subdomains">개인 사이트 · 서브도메인 정리</span>
+              <span class="tl-desc" data-en="Rebuilding the main hub first">메인 허브부터 다시 세우는 중</span>
+            </span>
+          </li>
+          <li data-reveal>
+            <span class="tl-year">----</span>
+            <span class="tl-body">
+              <span class="tl-title" data-en="Korea University, graduated">고려대학교 졸업</span>
+              <span class="tl-desc" data-en="Fill in the year">연도를 채워 넣으세요</span>
+            </span>
+          </li>
+          <li data-reveal>
+            <span class="tl-year">----</span>
+            <span class="tl-body">
+              <span class="tl-title" data-en="Role placeholder">경력 자리</span>
+              <span class="tl-desc" data-en="Company · role · period">회사 · 역할 · 기간</span>
+            </span>
+          </li>
+        </ol>
+
+        <div class="tl-side">
+          <h3 class="sub-head" data-reveal data-en="Log">기록</h3>
+          <ul class="log-list" data-flow>
+            <li data-reveal>
+              <span class="log-kind" data-en="Talk">발표</span>
+              <span class="log-title" data-en="Talk title placeholder">발표 제목 자리</span>
+              <span class="log-when">----</span>
+            </li>
+            <li data-reveal>
+              <span class="log-kind" data-en="Award">수상</span>
+              <span class="log-title" data-en="Contest · placement">대회 · 순위 자리</span>
+              <span class="log-when">----</span>
+            </li>
+            <li data-reveal>
+              <span class="log-kind">CTF</span>
+              <span class="log-title" data-en="Team · contest">팀 · 대회 자리</span>
+              <span class="log-when">----</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 04 · BLOG (커버 이미지 카드 캐러셀) ═════════════ -->
+  <section class="section blog" id="blog" data-surface="1" data-section="블로그" data-section-en="Blog">
+    <div class="shell">
+      <div class="sec-head">
+        <div>
+          <p class="section-kicker" data-reveal><span class="num">02</span> <span data-en="Blog">블로그</span></p>
+          <h2 class="section-title" data-split="chars" data-flow>What I <span class="thin">Wrote</span></h2>
+          <p class="section-tagline" data-reveal data-en="Notes I have written.">쓴 글을 모아 둡니다.</p>
+        </div>
+        <div class="carousel-nav" data-reveal>
+          <span class="slider-count">
+            <span id="blog-current">01</span><span class="slider-slash">/</span><span id="blog-total">06</span>
+          </span>
+          <button class="rail-btn" id="blog-prev" type="button" aria-label="이전 글" data-en-label="Previous post">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8H4M7.5 4.5 4 8l3.5 3.5"/></svg>
+          </button>
+          <button class="rail-btn" id="blog-next" type="button" aria-label="다음 글" data-en-label="Next post">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="carousel" id="blog-carousel">
+        <ul class="carousel-track" id="blog-track" tabindex="0" aria-label="블로그 글 목록 (가로 스크롤)" data-en-label="Blog posts (horizontal scroll)">
+
+          <li class="bcard" data-reveal>
+            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+              <span class="bcard-media">
+                <img src="assets/cover-01.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <span class="bcard-badge" data-en="Soon">준비 중</span>
+              </span>
+              <span class="bcard-body">
+                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="7 min">7분</span></span>
+                <span class="bcard-title" data-en="Scroll motion without a library">라이브러리 없이 만든 스크롤 모션</span>
+                <span class="bcard-excerpt" data-en="How far IntersectionObserver and rAF alone can go, and where to stop.">IntersectionObserver와 rAF만으로 어디까지 되는지, 그리고 어디서 멈춰야 하는지.</span>
+                <span class="bcard-tags"><span class="tag">#frontend</span><span class="tag">#motion</span></span>
+              </span>
+            </a>
+          </li>
+
+          <li class="bcard" data-reveal>
+            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+              <span class="bcard-media">
+                <img src="assets/cover-02.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <span class="bcard-badge" data-en="Soon">준비 중</span>
+              </span>
+              <span class="bcard-body">
+                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="5 min">5분</span></span>
+                <span class="bcard-title" data-en="Splitting a site into subdomains">서브도메인으로 사이트 쪼개기</span>
+                <span class="bcard-excerpt" data-en="Why the main site keeps only the door, and how the rest is deployed.">메인은 입구만 남기고 나머지를 각자의 자리로 보낸 이유와 배포 구조.</span>
+                <span class="bcard-tags"><span class="tag">#infra</span><span class="tag">#dns</span></span>
+              </span>
+            </a>
+          </li>
+
+          <li class="bcard" data-reveal>
+            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+              <span class="bcard-media">
+                <img src="assets/cover-03.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <span class="bcard-badge" data-en="Soon">준비 중</span>
+              </span>
+              <span class="bcard-body">
+                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="9 min">9분</span></span>
+                <span class="bcard-title" data-en="Faking a terminal on the web">웹에서 터미널 흉내내기</span>
+                <span class="bcard-excerpt" data-en="What it takes to build navigation that is actually used, not decoration.">장식용이 아니라 실제로 쓰이는 내비게이션을 만들 때 필요한 것들.</span>
+                <span class="bcard-tags"><span class="tag">#ux</span><span class="tag">#a11y</span></span>
+              </span>
+            </a>
+          </li>
+
+          <li class="bcard" data-reveal>
+            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+              <span class="bcard-media">
+                <img src="assets/cover-04.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <span class="bcard-badge" data-en="Soon">준비 중</span>
+              </span>
+              <span class="bcard-body">
+                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="6 min">6분</span></span>
+                <span class="bcard-title" data-en="Dark mode with two surfaces">두 개의 서피스로 만드는 다크 모드</span>
+                <span class="bcard-excerpt" data-en="What changes when you shift surface levels instead of inverting colors.">색을 반전하는 대신 표면 단계만 바꾸면 생기는 것들. 토큰 설계 기록.</span>
+                <span class="bcard-tags"><span class="tag">#css</span><span class="tag">#design</span></span>
+              </span>
+            </a>
+          </li>
+
+          <li class="bcard" data-reveal>
+            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+              <span class="bcard-media">
+                <img src="assets/cover-05.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <span class="bcard-badge" data-en="Soon">준비 중</span>
+              </span>
+              <span class="bcard-body">
+                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="4 min">4분</span></span>
+                <span class="bcard-title" data-en="A custom cursor that stays out of the way">커스텀 커서를 방해되지 않게</span>
+                <span class="bcard-excerpt" data-en="Between a cool cursor and a usable one. How many states are too many?">멋있는 커서와 쓸 수 있는 커서 사이. 상태를 몇 개까지 두는 게 좋을까.</span>
+                <span class="bcard-tags"><span class="tag">#interaction</span></span>
+              </span>
+            </a>
+          </li>
+
+          <li class="bcard" data-reveal>
+            <a class="bcard-hit" href="#" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+              <span class="bcard-media">
+                <img src="assets/cover-06.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <span class="bcard-badge" data-en="Soon">준비 중</span>
+              </span>
+              <span class="bcard-body">
+                <span class="bcard-meta"><span class="bcard-date">----.--.--</span><i>·</i><span data-en="8 min">8분</span></span>
+                <span class="bcard-title" data-en="Keeping a build-free site alive">빌드 없는 사이트를 유지하는 법</span>
+                <span class="bcard-excerpt" data-en="Living with zero dependencies. Where it helps, and where you give in.">의존성 0으로 버티기. 편해지는 지점과 결국 포기하게 되는 지점.</span>
+                <span class="bcard-tags"><span class="tag">#static</span><span class="tag">#tooling</span></span>
+              </span>
+            </a>
+          </li>
+
+          <!-- 마지막 칸은 블로그로 넘어가는 문입니다 -->
+          <li class="bcard bcard-more" data-reveal>
+            <a class="bcard-hit" href="https://blog.m4ch77.com" rel="noopener" target="_blank"
+               data-cursor-label="블로그" data-cursor-label-en="Blog" data-cursor-box>
+              <span class="bcard-more-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16"><path d="M4 12 12 4M6 4h6v6"/></svg>
+              </span>
+              <span class="bcard-more-title" data-en="Read all posts">글 전체 보기</span>
+              <span class="bcard-more-sub">blog.m4ch77.com</span>
+              <span class="tag" data-en="Soon">준비 중</span>
+            </a>
+          </li>
+
+        </ul>
+
+        <div class="carousel-foot">
+          <div class="carousel-dots" id="blog-dots"></div>
+          <div class="carousel-progress" aria-hidden="true"><span id="blog-fill"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 05 · TIL — 매일 한 줄씩 쌓는 칸 ═════════════════
+       기록을 추가하는 방법: 아래 til-list 맨 위에 <li> 하나를 더합니다.
+       data-til 의 날짜만 맞으면 잔디(히트맵)와 숫자는 자동으로 갱신됩니다. -->
+  <section class="section til" id="til" data-surface="2" data-section="TIL" data-section-en="TIL">
+    <div class="shell">
+      <div class="sec-head">
+        <div>
+          <p class="section-kicker" data-reveal><span class="num">03</span> TIL</p>
+          <h2 class="section-title" data-split="chars" data-flow>Today I <span class="thin">Learned</span></h2>
+          <p class="section-tagline" data-reveal data-en="One line for what I learn each day.">매일 배운 것을 한 줄로 남깁니다.</p>
+        </div>
+
+        <dl class="til-stats" data-reveal>
+          <div>
+            <dt data-en="Streak">연속</dt>
+            <dd><span id="til-streak">0</span><i data-en="d">일</i></dd>
+          </div>
+          <div>
+            <dt data-en="Last 7 days">최근 7일</dt>
+            <dd><span id="til-week">0</span><i data-en="notes">개</i></dd>
+          </div>
+          <div>
+            <dt data-en="Total">전체</dt>
+            <dd><span id="til-total">0</span><i data-en="notes">개</i></dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="til-heat-wrap" data-reveal>
+        <div class="til-heat" id="til-heat" aria-label="최근 기록 달력. 칸 하나가 하루입니다." data-en-label="Recent notes calendar. One cell is one day."></div>
+        <p class="til-legend">
+          <span class="tlg-scale">
+            <span data-en="less">없음</span>
+            <i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i>
+            <span data-en="more">많음</span>
+          </span>
+        </p>
+      </div>
+
+      <p class="til-filter" id="til-filter" hidden>
+        <span class="tf-key" data-en="Picked day">선택한 날</span>
+        <span class="tf-date" id="til-filter-date">----.--.--</span>
+        <span class="tf-count" id="til-filter-count"></span>
+        <button class="tf-clear" type="button" id="til-filter-clear" data-en="Show all">전체 보기</button>
+      </p>
+
+      <ol class="til-list" id="til-list" data-flow>
+        <li class="til-item" data-til="2026-08-01" data-reveal>
+          <time class="til-date" datetime="2026-08-01"></time>
+          <span class="til-body">
+            <span class="til-tag">CSS</span>
+            <span class="til-text" data-en="Scroll snap type goes on the container, snap points on the children. Sections taller than the viewport must opt out, or their inside becomes unreachable.">스크롤 스냅은 컨테이너에 종류를 걸고 자식에 지점을 건다. 화면보다 긴 섹션은 스냅에서 빼야 안쪽이 갇히지 않는다.</span>
+          </span>
+        </li>
+        <li class="til-item" data-til="2026-07-31" data-reveal>
+          <time class="til-date" datetime="2026-07-31"></time>
+          <span class="til-body">
+            <span class="til-tag">CSS</span>
+            <span class="til-text" data-en="100vw includes the scrollbar. To line something up with the screen edge, measure clientWidth instead.">100vw 는 스크롤바를 포함한다. 화면 끝에 무언가를 맞출 때는 clientWidth 를 재는 편이 안전하다.</span>
+          </span>
+        </li>
+        <li class="til-item" data-til="2026-07-30" data-reveal>
+          <time class="til-date" datetime="2026-07-30"></time>
+          <span class="til-body">
+            <span class="til-tag">a11y</span>
+            <span class="til-text" data-en="Where a color token is undefined, color falls back to the browser default. In dark mode that is white, so it vanishes on a light surface.">색 토큰이 정의되지 않은 자리에서 color 는 브라우저 기본값으로 떨어진다. 다크 모드에서는 그게 흰색이라 밝은 배경에서 사라진다.</span>
+          </span>
+        </li>
+        <li class="til-item" data-til="2026-07-28" data-reveal>
+          <time class="til-date" datetime="2026-07-28"></time>
+          <span class="til-body">
+            <span class="til-tag">JS</span>
+            <span class="til-text" data-en="With scroll-behavior: smooth on, a hand-rolled scrollTo animation fights the browser. Drop it to auto while animating.">scroll-behavior: smooth 가 켜져 있으면 scrollTo 로 만든 애니메이션과 싸운다. 직접 굴릴 때는 auto 로 잠깐 내려야 한다.</span>
+          </span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ══ 06 · FAQ ════════════════════════════════════════ -->
+  <section class="section" id="faq" data-surface="1" data-section="FAQ" data-section-en="FAQ">
+    <div class="shell">
+      <div class="sec-head">
+        <div>
+          <p class="section-kicker" data-reveal><span class="num">04</span> FAQ</p>
+          <h2 class="section-title" data-split="chars" data-flow>Frequently Asked <span class="thin">Questions</span></h2>
+        </div>
+        <p class="section-tagline" data-reveal data-en="Anything else, just email me.">여기에 없는 건 메일로 물어보시면 됩니다.</p>
+      </div>
+
+      <div class="faq" data-flow>
+        <details class="faq-item" data-reveal>
+          <summary><span data-en="Where does the name m4ch77 come from?">닉네임 m4ch77은 어디서 왔나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
+          <div class="faq-body"><p data-en="From the German word for power, and from Mach.">독일어로 '힘'을 뜻하는 말, 그리고 마하(Mach)에서 왔습니다.</p></div>
+        </details>
+        <details class="faq-item" data-reveal>
+          <summary><span data-en="When do the resume and blog open?">레쥬메와 블로그는 언제 열리나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
+          <div class="faq-body"><p data-en-html="The resume first, then the blog. They will live at <span class=&quot;mono&quot;>resume.m4ch77.com</span> and <span class=&quot;mono&quot;>blog.m4ch77.com</span>.">레쥬메가 먼저, 그다음이 블로그입니다. 각각 <span class="mono">resume.m4ch77.com</span> 와 <span class="mono">blog.m4ch77.com</span> 로 나갑니다.</p></div>
+        </details>
+        <details class="faq-item" data-reveal>
+          <summary><span data-en="Is the source of this site public?">이 사이트 소스는 공개되어 있나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
+          <div class="faq-body"><p data-en-html="Yes, it is on <a href=&quot;https://github.com/m4ch77&quot; rel=&quot;me noopener&quot; target=&quot;_blank&quot;>GitHub</a>."><a href="https://github.com/m4ch77" rel="me noopener" target="_blank">GitHub</a>에 공개되어 있습니다.</p></div>
+        </details>
+        <details class="faq-item" data-reveal>
+          <summary><span data-en="Does the terminal actually work?">터미널은 실제로 동작하나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
+          <div class="faq-body"><p data-en-html="It does. It sits on the right of the first screen. <code>ls</code> lists places, <code>open &lt;name&gt;</code> goes there. It shares its list with <kbd>⌘</kbd><kbd>K</kbd>. There is one hidden command too.">네. 첫 화면 오른쪽에 있습니다. <code>ls</code> 로 목록을 보고 <code>open &lt;이름&gt;</code> 으로 이동합니다. <kbd>⌘</kbd><kbd>K</kbd> 빠른 이동과 같은 목록을 씁니다. 숨은 명령어도 하나 있습니다.</p></div>
+        </details>
+        <details class="faq-item" data-reveal>
+          <summary><span data-en="I found a security issue.">보안 이슈를 발견했습니다.</span><span class="faq-sign" aria-hidden="true"></span></summary>
+          <div class="faq-body"><p data-en-html="Thank you. <a href=&quot;mailto:m4ch77@gmail.com&quot;>Please email me.</a> I would appreciate hearing from you before it goes public.">고맙습니다. <a href="mailto:m4ch77@gmail.com">메일로 알려주세요.</a> 공개 전에 먼저 연락 주시면 감사합니다.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── 푸터 ────────────────────────────────────────────── -->
+<footer class="footer" data-surface="2">
+  <div class="shell">
+
+    <div class="footer-contact" id="contact" data-section="연락" data-section-en="Contact">
+      <div class="fc-main">
+        <span class="fc-key" data-en="Contact">연락</span>
+        <a class="fc-mail" href="mailto:m4ch77@gmail.com" data-magnet data-cursor-label="쓰기" data-cursor-label-en="Write">
+          <span>m4ch77@gmail.com</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg>
+        </a>
+      </div>
+      <dl class="fc-meta">
+        <div><dt data-en="Reply">응답</dt><dd data-en="usually within 24h">보통 24시간 내</dd></div>
+        <div><dt data-en="Timezone">시간대</dt><dd>KST · UTC+9</dd></div>
+        <div><dt data-en="Security">보안</dt><dd><a href="mailto:m4ch77@gmail.com">Contact</a></dd></div>
+      </dl>
+    </div>
+
+    <div class="footer-top">
+      <nav class="footer-links" aria-label="바로가기" data-en-label="Links">
+        <a href="https://github.com/m4ch77" rel="me noopener" target="_blank" data-swap="GitHub">GitHub</a>
+        <a href="https://www.linkedin.com/in/m4ch77" rel="me noopener" target="_blank" data-swap="LinkedIn">LinkedIn</a>
+        <a href="https://x.com/m4ch77" rel="me noopener" target="_blank" data-swap="X">X</a>
+      </nav>
+    </div>
+
+    <div class="footer-wordmark" aria-hidden="true"><span id="footer-mark">m4ch77</span></div>
+
+    <div class="footer-bottom">
+      <span>© <span id="year">2026</span> m4ch77</span>
+      <span class="footer-bottom-mid">Seoul, KR</span>
+      <button class="footer-top-btn" type="button" id="to-top"><span data-en="Top">위로</span> <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M4.5 6.5 8 3l3.5 3.5"/></svg></button>
+    </div>
+  </div>
+</footer>
+
+<script src="main.js" defer></script>
+</body>
+</html>

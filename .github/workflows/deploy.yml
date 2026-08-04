@@ -1,0 +1,150 @@
+name: Deploy to GitHub Pages
+
+# main 에 푸시하면 산출물을 다시 모아서 Pages 로 배포합니다.
+# 수동 실행도 됩니다 (Actions 탭 → Run workflow).
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# GITHUB_TOKEN 최소 권한
+#   contents: read    저장소 체크아웃
+#   pages: write      Pages 배포 생성
+#   id-token: write   deploy-pages 의 OIDC 검증
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만. 진행 중인 배포를 중간에 끊으면
+# 사이트가 반쯤 올라간 상태로 남을 수 있어 취소하지 않습니다.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # ── 1. 빌드 ────────────────────────────────────────────
+  # 의존성이 없는 정적 사이트라 번들러가 없습니다.
+  # 여기서 하는 "빌드"는 공개할 파일만 _site/ 로 모으고 검사하는 것입니다.
+  build:
+    name: 빌드
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v7
+
+      - name: 산출물 모으기
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          rm -rf _site
+          mkdir -p _site
+
+          # 올릴 것만 고릅니다 (허용 목록).
+          # deploy/ · design.md · secret/ 처럼 저장소에만 두는 파일은
+          # 목록에 없으므로 구조적으로 올라갈 수 없습니다.
+          for f in *.html *.css *.js *.svg *.txt *.webmanifest; do
+            cp -v "$f" _site/
+          done
+
+          for d in assets .well-known; do
+            if [ -d "$d" ]; then
+              cp -Rv "$d" _site/
+            fi
+          done
+
+          echo "── _site 내용 ──"
+          find _site -type f | sort
+
+      - name: 비밀 값 유출 검사
+        run: |
+          set -euo pipefail
+
+          # 산출물에 키 파일이나 PEM 블록이 섞여 들어갔으면 배포를 멈춥니다.
+          # .gitignore 를 우회해 실수로 커밋된 경우를 잡는 두 번째 그물입니다.
+          fail=0
+
+          if find _site -type f \( -name '*.pem' -o -name '*.key' \
+               -o -name '*.p12' -o -name '*.pfx' -o -name '.env*' \) \
+               -print | grep -q .; then
+            echo "::error::산출물에 키 파일이 있습니다."
+            find _site -type f \( -name '*.pem' -o -name '*.key' \
+              -o -name '*.p12' -o -name '*.pfx' -o -name '.env*' \) -print
+            fail=1
+          fi
+
+          if grep -rIlE -- '-----BEGIN[ A-Z]*PRIVATE KEY-----' _site 2>/dev/null; then
+            echo "::error::산출물에 개인키 블록이 있습니다."
+            fail=1
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+          echo "통과: 비밀 값 없음"
+
+      - name: 문법 검사
+        run: |
+          set -euo pipefail
+          # 런너에 이미 있는 node 만 씁니다 (설치 없음).
+          for f in _site/*.js; do
+            node --check "$f"
+            echo "ok  $f"
+          done
+
+      - name: 참조 자원 확인
+        run: |
+          set -euo pipefail
+          # index.html 이 가리키는 로컬 파일이 실제로 있는지 봅니다.
+          # 자원 이름을 고치고 한쪽만 바꿨을 때를 잡습니다.
+          node - <<'JS'
+          const fs = require('fs');
+          const path = require('path');
+
+          const root = '_site';
+          let missing = [];
+
+          for (const page of fs.readdirSync(root).filter(f => f.endsWith('.html'))) {
+            const html = fs.readFileSync(path.join(root, page), 'utf8');
+            const refs = [...html.matchAll(/(?:src|href)\s*=\s*["']([^"']+)["']/g)]
+              .map(m => m[1])
+              // 외부 · 앵커 · 데이터 URI · mailto 는 검사 대상이 아닙니다
+              .filter(u => !/^(https?:|\/\/|#|data:|mailto:|tel:)/.test(u));
+
+            for (const ref of new Set(refs)) {
+              const rel = ref.split(/[?#]/)[0];
+              if (!rel) continue;
+              const target = path.join(root, rel.replace(/^\//, ''));
+              if (!fs.existsSync(target)) missing.push(`${page} → ${ref}`);
+            }
+          }
+
+          if (missing.length) {
+            console.error('::error::없는 파일을 가리키고 있습니다:');
+            for (const m of missing) console.error('  ' + m);
+            process.exit(1);
+          }
+          console.log('통과: 모든 로컬 참조가 존재합니다');
+          JS
+
+      - name: 아티팩트 업로드
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+          # .well-known/security.txt 가 점으로 시작해서
+          # 이 옵션이 없으면 아티팩트에서 빠집니다.
+          include-hidden-files: true
+
+  # ── 2. 배포 ────────────────────────────────────────────
+  deploy:
+    name: 배포
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Pages 로 배포
+        id: deployment
+        uses: actions/deploy-pages@v5

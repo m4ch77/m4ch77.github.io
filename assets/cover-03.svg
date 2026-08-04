@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-label="">
+  <rect width="960" height="600" fill="#0b0d11"/>
+  <rect x="120" y="110" width="720" height="380" rx="14" fill="#14181f" stroke="#e6e8ee" stroke-opacity=".12"/>
+  <g fill="#e6e8ee" fill-opacity=".2">
+    <circle cx="156" cy="146" r="6" fill="#7aa2ff" fill-opacity="1"/>
+    <circle cx="178" cy="146" r="6"/>
+    <circle cx="200" cy="146" r="6"/>
+  </g>
+  <path d="M120 176h720" stroke="#e6e8ee" stroke-opacity=".1"/>
+  <g font-family="ui-monospace, monospace" font-size="20">
+    <text x="156" y="230" fill="#7aa2ff">$</text>
+    <text x="182" y="230" fill="#e6e8ee" fill-opacity=".85">ls</text>
+    <text x="156" y="268" fill="#e6e8ee" fill-opacity=".45">resume  github  x  linkedin  blog</text>
+    <text x="156" y="316" fill="#7aa2ff">$</text>
+    <text x="182" y="316" fill="#e6e8ee" fill-opacity=".85">open github</text>
+    <text x="156" y="354" fill="#e6e8ee" fill-opacity=".45">→ github.com/m4ch77</text>
+    <text x="156" y="402" fill="#7aa2ff">$</text>
+  </g>
+  <rect x="182" y="386" width="12" height="22" fill="#7aa2ff"/>
+</svg>

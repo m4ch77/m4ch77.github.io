@@ -1,0 +1,117 @@
+/* ============================================================
+   m4ch77 — theme tokens
+   여러 사이트가 공유하는 값만 모아 둔 파일입니다.
+   이 파일을 먼저 불러오고, 각 사이트의 styles.css 를 뒤에 붙입니다.
+
+     <link rel="stylesheet" href="theme.css">
+     <link rel="stylesheet" href="styles.css">
+
+   규칙과 배경은 design.md 를 보세요.
+   여기에 없는 색·폰트·간격을 각 사이트에서 새로 만들지 않습니다.
+   ============================================================ */
+
+:root {
+  /* ── 타입 ──────────────────────────────────────────────
+     라틴과 한글이 같은 골격을 쓰도록 한 가족으로 통일합니다. */
+  --font-ui: "IBM Plex Sans KR", -apple-system, BlinkMacSystemFont,
+             "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif;
+  --font-display: var(--font-ui);
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ── 치수 ────────────────────────────────────────────── */
+  --shell: 1280px;
+  --gutter: clamp(1.25rem, 4.5vw, 4rem);
+  --radius: 4px;
+  --radius-lg: 16px;
+
+  /* ── 모션 ──────────────────────────────────────────────
+     감속 곡선 하나로 통일합니다. 길이만 세 단계. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 180ms var(--ease);
+  --t: 400ms var(--ease);
+  --t-slow: 880ms var(--ease);
+
+  /* 스크롤 스냅 애니메이션 (main.js 가 읽습니다) */
+  --snap-duration: 700;
+
+  /* ── 잉크(어두운) 계열 ─────────────────────────────────
+     밤에 오래 봐도 편하도록 두 서피스를 모두 어둡게 둡니다.
+     예전처럼 한쪽이 흰 종이가 되지 않습니다. */
+  --ink-1: #0a0b0d;
+  --ink-2: #14161c;
+  --ink-fg: #e6e8ec;
+  --ink-dim: #9a9ea8;
+  --ink-faint: #676b75;
+  --ink-line: rgba(230, 232, 236, 0.12);
+  --ink-line2: rgba(230, 232, 236, 0.26);
+  --ink-card: rgba(230, 232, 236, 0.045);
+  --ink-accent: #7aa2ff;
+  --ink-accent-soft: rgba(122, 162, 255, 0.14);
+  --ink-rgb: 230, 232, 236;
+
+  /* ── 종이(밝은) 계열 ───────────────────────────────────
+     순백은 눈이 시립니다. 따뜻한 상아색 쪽으로 내리고
+     글자도 파란 검정이 아니라 따뜻한 검정을 씁니다. */
+  --paper-1: #ece9e2;
+  --paper-2: #e0dcd3;
+  --paper-fg: #191815;
+  --paper-dim: #57534b;
+  --paper-faint: #8a8478;
+  --paper-line: rgba(25, 24, 21, 0.14);
+  --paper-line2: rgba(25, 24, 21, 0.26);
+  --paper-card: rgba(25, 24, 21, 0.04);
+  --paper-accent: #2a52cc;
+  --paper-accent-soft: rgba(42, 82, 204, 0.1);
+  --paper-rgb: 25, 24, 21;
+
+  /* 상태색은 두 테마 공용 */
+  --sig-err: #ff6b6b;
+  --sig-warn: #e0b341;
+}
+
+/* ── 테마 ───────────────────────────────────────────────
+   테마가 글자색과 선을 정하고, 서피스는 배경 단계만 정합니다.
+   (예전에는 서피스마다 글자색이 반전됐습니다) */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-1: var(--ink-1);
+  --bg-2: var(--ink-2);
+  --fg: var(--ink-fg);
+  --dim: var(--ink-dim);
+  --faint: var(--ink-faint);
+  --line: var(--ink-line);
+  --line2: var(--ink-line2);
+  --card: var(--ink-card);
+  --accent: var(--ink-accent);
+  --accent-soft: var(--ink-accent-soft);
+  --fg-rgb: var(--ink-rgb);
+  --on-accent: #06070a;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-1: var(--paper-1);
+  --bg-2: var(--paper-2);
+  --fg: var(--paper-fg);
+  --dim: var(--paper-dim);
+  --faint: var(--paper-faint);
+  --line: var(--paper-line);
+  --line2: var(--paper-line2);
+  --card: var(--paper-card);
+  --accent: var(--paper-accent);
+  --accent-soft: var(--paper-accent-soft);
+  --fg-rgb: var(--paper-rgb);
+  --on-accent: #ffffff;
+}
+
+/* ── 서피스 ─────────────────────────────────────────────
+   섹션을 1 / 2 로 번갈아 두면 배경 단계가 교차합니다. */
+[data-surface="1"] { --bg: var(--bg-1); }
+[data-surface="2"] { --bg: var(--bg-2); }
+
+[data-surface] {
+  background-color: var(--bg);
+  color: var(--fg);
+  transition: background-color 500ms var(--ease), color 500ms var(--ease);
+}
