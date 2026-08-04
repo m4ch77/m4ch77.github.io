@@ -1,108 +1,155 @@
 #!/usr/bin/env bash
 #
-# m4ch77.com 배포
+# m4ch77.com 배포 — AWS Amplify Hosting 수동 배포(zip 업로드)
 #   ./deploy/deploy.sh
 #
 # 필요한 값 (환경변수 또는 deploy/config.sh):
-#   SITE_BUCKET   S3 버킷 이름            (스택 출력 BucketName)
-#   SITE_DIST_ID  CloudFront 배포판 ID    (스택 출력 DistributionId)
-#   AWS_PROFILE   (선택) 쓸 자격증명 프로필
+#   AMPLIFY_APP_ID   Amplify 앱 ID       (필수)
+#   AMPLIFY_BRANCH   배포할 브랜치       (기본 main)
+#   AWS_REGION       리전                (기본 ap-northeast-2)
+#   AWS_PROFILE      (선택) 쓸 자격증명 프로필
 #
-# 캐시 정책
-#   파일 이름에 해시가 없으므로 CSS·JS 를 오래 캐시하면 수정이 반영되지
-#   않습니다. 짧게 잡고 배포마다 무효화합니다.
-#     index.html            매번 확인
-#     css · js              5분
-#     svg · 이미지          1일
-#   무효화는 경로 /* 하나로 처리합니다 (월 1,000 경로까지 무료).
+# 캐시
+#   Amplify 가 CDN 캐시와 배포별 무효화를 직접 관리합니다. 모든 파일이
+#   public, max-age=0, s-maxage=31536000 으로 내려갑니다. 브라우저는 매번
+#   확인하고 CDN 이 길게 들고 있다가 배포 시 엣지가 비워집니다.
+#   그래서 파일별 cache-control 지정도, 수동 무효화도 필요 없습니다.
+#
+# 올리는 것
+#   아래 FILES / DIRS 에 적힌 것만 올라갑니다. 제외 패턴이 아니라
+#   화이트리스트인 이유는 secret/ 같은 것이 한 번 새면 되돌릴 수 없기
+#   때문입니다. 새 정적 파일을 추가하면 이 목록에도 넣어야 합니다.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
 
 # shellcheck disable=SC1091
-[ -f deploy/config.sh ] && source deploy/config.sh
+[ -f "$ROOT/deploy/config.sh" ] && source "$ROOT/deploy/config.sh"
 
-: "${SITE_BUCKET:?SITE_BUCKET 을 지정하세요 (deploy/config.sh 또는 환경변수)}"
-: "${SITE_DIST_ID:?SITE_DIST_ID 을 지정하세요 (deploy/config.sh 또는 환경변수)}"
+: "${AMPLIFY_APP_ID:?AMPLIFY_APP_ID 을 지정하세요 (deploy/config.sh 또는 환경변수)}"
+APP_ID="$AMPLIFY_APP_ID"
+BRANCH="${AMPLIFY_BRANCH:-main}"
+REGION="${AWS_REGION:-ap-northeast-2}"
 
-command -v aws >/dev/null || { echo "aws CLI 가 없습니다."; exit 1; }
+command -v aws  >/dev/null || { echo "aws CLI 가 없습니다."; exit 1; }
+command -v zip  >/dev/null || { echo "zip 이 없습니다."; exit 1; }
+command -v curl >/dev/null || { echo "curl 이 없습니다."; exit 1; }
 
-S3="aws s3"
-CF="aws cloudfront"
+FILES=(
+  index.html
+  main.js
+  styles.css
+  theme.css
+  favicon.svg
+)
 
-echo "▸ 대상   s3://$SITE_BUCKET  (배포판 $SITE_DIST_ID)"
+DIRS=(
+  assets
+  .well-known
+)
+
+STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
+SITE="$STAGE/site"
+ZIP="$STAGE/site.zip"
+mkdir -p "$SITE"
+
+echo "▸ 앱     $APP_ID   브랜치 $BRANCH   리전 $REGION"
 echo "▸ 경로   $ROOT"
 echo
 
-# 올리지 않을 것들 — 저장소 안에만 두는 파일
-EXCLUDES=(
-  --exclude ".*"
-  --exclude ".*/*"
-  --exclude "deploy/*"
-  --exclude "design.md"
-  --exclude "_shot.html"
-  --exclude "*.md"
-)
+# ── 1. 번들 구성
+echo "▸ 번들 구성"
+for f in "${FILES[@]}"; do
+  [ -f "$ROOT/$f" ] || { echo "  파일이 없습니다: $f"; exit 1; }
+  cp "$ROOT/$f" "$SITE/"
+done
 
-# ── 1. 정적 자원 먼저 (HTML 보다 먼저 올려야 새 HTML 이 빈 곳을 가리키지 않습니다)
-echo "▸ 이미지·아이콘"
-$S3 sync . "s3://$SITE_BUCKET" \
-  "${EXCLUDES[@]}" \
-  --exclude "*" --include "assets/*" --include "favicon.svg" \
-  --cache-control "public, max-age=86400" \
-  --content-type "image/svg+xml" \
-  --no-progress
+for d in "${DIRS[@]}"; do
+  [ -d "$ROOT/$d" ] || { echo "  디렉터리가 없습니다: $d"; exit 1; }
+  cp -R "$ROOT/$d" "$SITE/"
+done
 
-# ── 2. 스타일과 스크립트
-echo "▸ CSS · JS"
-$S3 sync . "s3://$SITE_BUCKET" \
-  "${EXCLUDES[@]}" \
-  --exclude "*" --include "*.css" \
-  --cache-control "public, max-age=300, stale-while-revalidate=86400" \
-  --content-type "text/css; charset=utf-8" \
-  --no-progress
+find "$SITE" -name '.DS_Store' -delete
+find "$SITE" -name '._*' -delete
 
-$S3 sync . "s3://$SITE_BUCKET" \
-  "${EXCLUDES[@]}" \
-  --exclude "*" --include "*.js" \
-  --cache-control "public, max-age=300, stale-while-revalidate=86400" \
-  --content-type "text/javascript; charset=utf-8" \
-  --no-progress
-
-# ── 3. security.txt (charset 을 명시해야 깨지지 않습니다)
-if [ -f .well-known/security.txt ]; then
-  echo "▸ .well-known/security.txt"
-  $S3 cp .well-known/security.txt "s3://$SITE_BUCKET/.well-known/security.txt" \
-    --cache-control "public, max-age=3600" \
-    --content-type "text/plain; charset=utf-8" \
-    --no-progress
+# ── 2. 안전장치 — 올려서는 안 되는 것이 섞였으면 여기서 멈춥니다
+LEAKED="$(find "$SITE" \
+  \( -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' \
+     -o -name 'config.sh' -o -name '.env' -o -name '*.md' \) -print)"
+if [ -n "$LEAKED" ]; then
+  echo
+  echo "중단합니다. 번들에 올려서는 안 되는 파일이 있습니다:"
+  echo "$LEAKED" | sed "s|$SITE/|  |"
+  exit 1
 fi
 
-# ── 4. HTML 마지막
-echo "▸ HTML"
-$S3 sync . "s3://$SITE_BUCKET" \
-  "${EXCLUDES[@]}" \
-  --exclude "*" --include "*.html" \
-  --cache-control "no-cache" \
-  --content-type "text/html; charset=utf-8" \
-  --no-progress
+COUNT="$(find "$SITE" -type f | wc -l | tr -d ' ')"
+echo "  파일 $COUNT 개"
+find "$SITE" -type f | sed "s|$SITE/|    |" | sort
 
-# ── 5. 지운 파일 정리 (위 업로드가 모두 끝난 뒤에만)
-echo "▸ 남은 파일 정리"
-$S3 sync . "s3://$SITE_BUCKET" "${EXCLUDES[@]}" --delete --size-only --no-progress
+# ── 3. zip
+( cd "$SITE" && zip -r -X -q "$ZIP" . )
+echo "  zip $(wc -c < "$ZIP" | tr -d ' ') bytes"
 
-# ── 6. 엣지 캐시 비우기
-echo "▸ 캐시 무효화"
-INV_ID=$($CF create-invalidation \
-  --distribution-id "$SITE_DIST_ID" \
-  --paths "/*" \
-  --query "Invalidation.Id" --output text)
-echo "  무효화 $INV_ID 요청됨 (반영까지 보통 1분 이내)"
+# ── 4. 배포 슬롯 발급 + 업로드
+#    presigned URL 은 자격증명이 들어 있으니 출력하지 않습니다.
+echo "▸ 업로드"
+read -r JOB_ID UPLOAD_URL <<<"$(aws amplify create-deployment \
+  --app-id "$APP_ID" --branch-name "$BRANCH" --region "$REGION" \
+  --query '[jobId,zipUploadUrl]' --output text)"
+
+[ -n "${JOB_ID:-}" ] && [ -n "${UPLOAD_URL:-}" ] || {
+  echo "  create-deployment 응답을 읽지 못했습니다."; exit 1; }
+
+curl -fsS --upload-file "$ZIP" "$UPLOAD_URL" >/dev/null
+echo "  job $JOB_ID 업로드 완료"
+
+# ── 5. 배포 시작
+echo "▸ 배포"
+aws amplify start-deployment \
+  --app-id "$APP_ID" --branch-name "$BRANCH" --job-id "$JOB_ID" \
+  --region "$REGION" >/dev/null
+
+# ── 6. 끝날 때까지 기다립니다 (실패하면 0 이 아닌 값으로 종료)
+DONE=""
+for _ in $(seq 1 90); do
+  STATUS="$(aws amplify get-job \
+    --app-id "$APP_ID" --branch-name "$BRANCH" --job-id "$JOB_ID" \
+    --region "$REGION" --query 'job.summary.status' --output text)"
+  case "$STATUS" in
+    SUCCEED)
+      echo "  $STATUS"
+      DONE=1
+      break
+      ;;
+    FAILED|CANCELLED)
+      echo "  $STATUS"
+      echo
+      echo "로그를 보려면:"
+      echo "  aws amplify get-job --app-id $APP_ID --branch-name $BRANCH \\"
+      echo "    --job-id $JOB_ID --region $REGION"
+      exit 1
+      ;;
+    *)
+      sleep 4
+      ;;
+  esac
+done
+
+[ -n "$DONE" ] || { echo "  시간이 초과됐습니다. job $JOB_ID 상태를 직접 확인하세요."; exit 1; }
+
+# ── 7. 확인
+DEFAULT_DOMAIN="$(aws amplify get-app --app-id "$APP_ID" --region "$REGION" \
+  --query 'app.defaultDomain' --output text)"
 
 echo
-echo "완료. 확인:"
-$CF get-distribution --id "$SITE_DIST_ID" \
-  --query "Distribution.{도메인:DomainName,별칭:DistributionConfig.Aliases.Items,상태:Status}" \
-  --output table
+echo "완료."
+echo "  https://${BRANCH}.${DEFAULT_DOMAIN}"
+
+CUSTOM="$(aws amplify list-domain-associations --app-id "$APP_ID" --region "$REGION" \
+  --query 'domainAssociations[?domainStatus==`AVAILABLE`].domainName' --output text 2>/dev/null || true)"
+for d in $CUSTOM; do
+  echo "  https://$d"
+done

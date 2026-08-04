@@ -1,6 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────
+#  지금은 쓰이지 않는 템플릿입니다.
+#
+#  이 사이트는 AWS Amplify Hosting 으로 운영합니다. 배포 방법과 현재
+#  구성은 deploy/README.md 를 보세요. 이 스택은 배포되어 있지 않습니다.
+#
+#  남겨둔 이유: Amplify 무료 한도가 끝난 뒤 전송 비용이 문제가 되면
+#  S3 + CloudFront 로 옮기는 선택지가 있고, CloudFront 무료 한도는
+#  기간 제한이 없습니다. 그때 쓸 수 있게 보관합니다.
+#
+#  주의: 이 템플릿은 AWS 로 검증한 적이 없습니다. 쓰기 전에
+#    aws cloudformation validate-template --template-body file://deploy/cloudformation.yaml
+#  를 먼저 돌려보세요. 그리고 이 구성으로 옮기면 인증서를 us-east-1 에
+#  직접 발급하고 DNS 도 새 배포판으로 다시 걸어야 합니다.
+# ─────────────────────────────────────────────────────────────────────
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  m4ch77.com — 정적 사이트 호스팅 (비공개 S3 + CloudFront).
+  m4ch77.com — 정적 사이트 호스팅 (비공개 S3 + CloudFront). 현재 미사용.
   버킷은 외부에 열지 않고 CloudFront만 읽게 둡니다(OAC).
   열어야 할 포트도, 관리할 서버도 없습니다.
 
