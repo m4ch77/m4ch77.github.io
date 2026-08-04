@@ -35,18 +35,28 @@ REGION="${AWS_REGION:-ap-northeast-2}"
 command -v aws  >/dev/null || { echo "aws CLI 가 없습니다."; exit 1; }
 command -v zip  >/dev/null || { echo "zip 이 없습니다."; exit 1; }
 command -v curl >/dev/null || { echo "curl 이 없습니다."; exit 1; }
+command -v npm  >/dev/null || { echo "npm 이 없습니다 (글 빌드에 필요합니다)."; exit 1; }
+
+# ── 0. 글을 먼저 빌드합니다
+#    writing/ 은 content/writing/*.md 에서 만들어지는 산출물이라
+#    저장소에 없습니다. 빌드하지 않으면 글이 빠진 채로 올라갑니다.
+echo "▸ 글 빌드"
+( cd "$ROOT" && npm run build )
+echo
 
 FILES=(
   index.html
   main.js
   styles.css
   theme.css
+  writing.css
   favicon.svg
 )
 
 DIRS=(
   assets
   .well-known
+  writing
 )
 
 STAGE="$(mktemp -d)"
