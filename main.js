@@ -1030,12 +1030,29 @@
       else if (e.key === "End") { e.preventDefault(); goTo(cards.length - 1); }
     });
 
-    // 끌어서 넘기기
+    /* 끌어서 넘기기
+
+       손으로 미는 느낌을 내려면 브라우저가 기본으로 하는 두 가지를
+       막아야 합니다. 둘 다 카드 안에 <a> 와 <img> 가 있어서 생깁니다.
+
+         1. 네이티브 드래그 — 링크나 이미지를 잡으면 반투명 유령이 딸려
+            나옵니다. dragstart 를 막습니다.
+         2. 텍스트 선택 — 옆으로 끌면 제목과 본문이 파랗게 잡힙니다.
+            끄는 동안만 선택을 끕니다.
+
+       그리고 끌고 나서 손을 뗄 때 클릭이 따라 발생합니다. 그대로 두면
+       카드가 열립니다. 예전에는 클릭 리스너를 하나 붙여 첫 클릭을
+       삼키게 했는데, 클릭이 오지 않으면 그 리스너가 남아서 **다음에
+       진짜로 누른 클릭**을 삼켰습니다. 이제는 시간으로 판단합니다. */
     if (canHover) {
       var dragging = false, moved = 0, x0 = 0, s0 = 0, pid = null;
+      var suppressUntil = 0;
+
+      // 네이티브 드래그(유령 이미지)를 막습니다.
+      track.addEventListener("dragstart", function (e) { e.preventDefault(); });
 
       track.addEventListener("pointerdown", function (e) {
-        if (e.button !== 0) return;
+        if (e.button !== 0 || e.pointerType !== "mouse") return;
         dragging = true;
         moved = 0;
         x0 = e.clientX;
@@ -1047,7 +1064,10 @@
       track.addEventListener("pointermove", function (e) {
         if (!dragging) return;
         var dx = e.clientX - x0;
-        if (Math.abs(dx) > 4) track.classList.add("is-dragging");
+        if (Math.abs(dx) > 4 && !track.classList.contains("is-dragging")) {
+          // 스냅과 선택을 끄는 것은 실제로 끌기 시작한 뒤에만 합니다.
+          track.classList.add("is-dragging");
+        }
         moved = Math.max(moved, Math.abs(dx));
         track.scrollLeft = s0 - dx;
       });
@@ -1061,16 +1081,21 @@
           pid = null;
         }
         if (moved > 8) {
-          track.addEventListener("click", function block(ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            track.removeEventListener("click", block, true);
-          }, true);
+          // 손을 뗀 직후에 오는 클릭 한 번만 무시합니다.
+          suppressUntil = now() + 250;
           goTo(index());
         }
       };
       track.addEventListener("pointerup", endDrag);
       track.addEventListener("pointercancel", endDrag);
+      track.addEventListener("lostpointercapture", endDrag);
+
+      // 리스너는 하나만 두고, 삼킬지 말지는 시각으로 정합니다.
+      track.addEventListener("click", function (e) {
+        if (now() >= suppressUntil) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
     }
 
     update();

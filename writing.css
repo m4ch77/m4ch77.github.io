@@ -500,3 +500,105 @@
 @media (prefers-reduced-motion: reduce) {
   .wr-adj-item:hover { transform: none; }
 }
+
+/* ══ 13. Notion 에서 온 것들 ══════════════════════════════
+   Notion 고유 블록은 build/notion.mjs 가 아래 마크업으로 바꿔 둡니다. */
+
+/* 콜아웃 (<aside> → .nt-callout) */
+.nt-callout {
+  display: flex;
+  gap: 0.85rem;
+  margin-block: 1.6em;
+  padding: 1rem 1.15rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.nt-callout-icon {
+  flex: none;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.nt-callout-body { min-width: 0; }
+/* 콜아웃 안에서는 위아래 여백을 줄여 상자가 부풀지 않게 합니다. */
+.nt-callout-body > :first-child { margin-top: 0; }
+.nt-callout-body > :last-child { margin-bottom: 0; }
+.nt-callout-body > * + * { margin-top: 0.7em; }
+
+/* 토글 (<details>) */
+.wr-prose details {
+  margin-block: 1.6em;
+  padding: 0.85rem 1.15rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.wr-prose summary {
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.wr-prose summary::-webkit-details-marker { display: none; }
+.wr-prose summary::before {
+  content: "";
+  flex: none;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.5px solid var(--faint);
+  border-bottom: 1.5px solid var(--faint);
+  transform: rotate(-45deg);
+  transition: transform var(--t-fast);
+}
+.wr-prose details[open] > summary::before { transform: rotate(45deg); }
+.wr-prose details[open] > summary { margin-bottom: 0.8em; }
+
+/* 밑줄 — 링크와 헷갈리지 않게 색을 빌려 쓰지 않습니다. */
+.wr-prose u {
+  text-decoration: underline;
+  text-decoration-color: var(--line2);
+  text-underline-offset: 3px;
+}
+
+/* 글자색 · 배경색
+   Notion 에서 고른 색은 UI 색이 아니라 **글의 내용**입니다. 그래서
+   theme.css 의 강조색 규칙(design.md 2절) 바깥에 둡니다. 대신 두 테마
+   모두에서 읽히도록 채도를 낮춰 잡았습니다. */
+[data-theme="dark"] {
+  --nt-gray: #9aa0aa;  --nt-brown: #b08968;  --nt-orange: #e0a267;
+  --nt-yellow: #d9bf5e; --nt-green: #7fc08a;  --nt-blue: #7aa2ff;
+  --nt-purple: #b08ae0; --nt-pink: #e08ab0;   --nt-red: #ff8080;
+  --nt-bg-alpha: 0.16;
+}
+[data-theme="light"] {
+  --nt-gray: #6b6b6b;  --nt-brown: #7a5230;  --nt-orange: #9a5b18;
+  --nt-yellow: #7a6410; --nt-green: #2f6b3c;  --nt-blue: #2a52cc;
+  --nt-purple: #6b3a9a; --nt-pink: #9a3a63;   --nt-red: #b02525;
+  --nt-bg-alpha: 0.13;
+}
+
+.nt-gray { color: var(--nt-gray); }
+.nt-brown { color: var(--nt-brown); }
+.nt-orange { color: var(--nt-orange); }
+.nt-yellow { color: var(--nt-yellow); }
+.nt-green { color: var(--nt-green); }
+.nt-blue { color: var(--nt-blue); }
+.nt-purple { color: var(--nt-purple); }
+.nt-pink { color: var(--nt-pink); }
+.nt-red { color: var(--nt-red); }
+
+[class^="nt-bg-"] {
+  border-radius: var(--radius);
+  padding: 0.04em 0.28em;
+}
+.nt-bg-gray { background: color-mix(in srgb, var(--nt-gray) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-brown { background: color-mix(in srgb, var(--nt-brown) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-orange { background: color-mix(in srgb, var(--nt-orange) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-yellow { background: color-mix(in srgb, var(--nt-yellow) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-green { background: color-mix(in srgb, var(--nt-green) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-blue { background: color-mix(in srgb, var(--nt-blue) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-purple { background: color-mix(in srgb, var(--nt-purple) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-pink { background: color-mix(in srgb, var(--nt-pink) calc(var(--nt-bg-alpha) * 100%), transparent); }
+.nt-bg-red { background: color-mix(in srgb, var(--nt-red) calc(var(--nt-bg-alpha) * 100%), transparent); }

@@ -26,6 +26,7 @@ import {
   excerptFrom,
 } from "./markdown.mjs";
 import { feedPage, postPage, rss, hubCards } from "./templates.mjs";
+import * as notion from "./notion.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CONTENT = path.join(ROOT, "content", "writing");
@@ -40,55 +41,111 @@ const DATE_OK = /^\d{4}-\d{2}-\d{2}$/;
 const say = (...a) => console.log(...a);
 const problems = [];
 
-/* ── 1. 글 읽기 ─────────────────────────────────────────── */
+/* ── 1. 글 찾기 ─────────────────────────────────────────
+   두 가지 형태를 받습니다.
+
+     content/writing/이름.md              그림 없는 글
+     content/writing/이름/index.md        그림이 딸린 글 (Notion 내보내기)
+
+   Notion 에서 "Export as Markdown & CSV" 를 하면 `제목 32자리hex.md` 와
+   같은 이름의 폴더가 함께 나옵니다. 둘을 `이름/index.md` 와 `이름/` 로
+   옮기면 그림 경로가 그대로 맞습니다. */
+async function findSources() {
+  if (!existsSync(CONTENT)) return [];
+
+  const out = [];
+  for (const e of await readdir(CONTENT, { withFileTypes: true })) {
+    if (e.isFile() && /\.(md|markdown)$/i.test(e.name)) {
+      out.push({
+        slug: e.name.replace(/\.(md|markdown)$/i, ""),
+        file: path.join(CONTENT, e.name),
+        label: e.name,
+        dir: null,
+      });
+    } else if (e.isDirectory()) {
+      for (const name of ["index.md", "index.markdown"]) {
+        const p = path.join(CONTENT, e.name, name);
+        if (existsSync(p)) {
+          out.push({
+            slug: e.name,
+            file: p,
+            label: `${e.name}/${name}`,
+            dir: path.join(CONTENT, e.name),
+          });
+          break;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/* ── 2. 글 읽기 ─────────────────────────────────────────── */
 async function loadPosts() {
-  if (!existsSync(CONTENT)) {
-    say(`  content/writing/ 이 없습니다. 빈 목록으로 진행합니다.`);
+  const sources = await findSources();
+  if (!sources.length) {
+    say("  글이 없습니다. content/writing/ 에 마크다운을 넣어보세요.");
     return [];
   }
 
-  const files = (await readdir(CONTENT)).filter((f) => /\.(md|markdown)$/i.test(f));
   const posts = [];
 
-  for (const file of files) {
-    const slug = file.replace(/\.(md|markdown)$/i, "");
-    const raw = await readFile(path.join(CONTENT, file), "utf8");
-    const { data, content } = matter(raw);
+  for (const src of sources) {
+    const raw = await readFile(src.file, "utf8");
 
-    // 파일 이름이 주소가 되므로 이름 규칙을 지키게 합니다.
-    if (!SLUG_OK.test(slug)) {
+    // --- 프런트매터가 있으면 그것이 우선입니다.
+    const fm = matter(raw);
+    const hasFrontmatter = Object.keys(fm.data).length > 0;
+
+    // Notion 표기를 표준 마크다운으로 고칩니다 (수식 · 콜아웃 · 색 · 경로).
+    const norm = notion.normalize(fm.content, { hasFrontmatter });
+
+    // 프런트매터 > Notion 속성 순으로 합칩니다.
+    const data = { ...norm.data, ...fm.data };
+    const content = norm.body;
+
+    if (!SLUG_OK.test(src.slug)) {
       problems.push(
-        `${file} — 파일 이름은 소문자·숫자·하이픈만 쓸 수 있습니다 (주소가 되는 값입니다). 예: scroll-motion.md`,
+        `${src.label} — 이름은 소문자·숫자·하이픈만 쓸 수 있습니다 (주소가 되는 값입니다). 예: scroll-motion`,
       );
       continue;
     }
     if (!data.title) {
-      problems.push(`${file} — 프런트매터에 title 이 없습니다.`);
-      continue;
-    }
-    if (!data.date || !DATE_OK.test(String(data.date.toISOString?.().slice(0, 10) ?? data.date))) {
-      problems.push(`${file} — date 가 없거나 형식이 YYYY-MM-DD 가 아닙니다.`);
+      problems.push(
+        `${src.label} — 제목이 없습니다. 프런트매터에 title 을 적거나, 첫 줄을 "# 제목" 으로 두세요.`,
+      );
       continue;
     }
 
     const iso = (d) =>
       d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10);
+    const date = data.date ? iso(data.date) : null;
+
+    if (!date || !DATE_OK.test(date)) {
+      problems.push(
+        `${src.label} — 날짜가 없거나 형식이 YYYY-MM-DD 가 아닙니다. 프런트매터의 date 나 Notion 의 "Created" 속성을 확인하세요.`,
+      );
+      continue;
+    }
 
     const draft = data.draft === true;
     if (draft && !withDrafts) {
-      say(`  건너뜀 (초안)  ${file}`);
+      say(`  건너뜀 (초안)  ${src.label}`);
       continue;
     }
 
     posts.push({
-      slug,
-      file,
+      slug: src.slug,
+      label: src.label,
+      assetDir: src.dir,
       source: content,
       title: String(data.title),
-      date: iso(data.date),
+      date,
       updated: data.updated ? iso(data.updated) : null,
       summary: data.summary ? String(data.summary) : excerptFrom(content),
-      tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
+      tags: Array.isArray(data.tags)
+        ? data.tags.map(String)
+        : data.tags ? String(data.tags).split(/[,·]/).map((t) => t.trim()).filter(Boolean) : [],
       lang: data.lang === "en" ? "en" : "ko",
       cover: data.cover ? String(data.cover) : null,
       draft,
@@ -184,13 +241,28 @@ async function main() {
   await mkdir(OUT, { recursive: true });
 
   // 글마다 디렉터리 하나. /writing/<이름>/index.html → /writing/<이름>
+  let copiedAssets = 0;
   for (let i = 0; i < posts.length; i++) {
     const p = posts[i];
     const dir = path.join(OUT, p.slug);
     await mkdir(dir, { recursive: true });
+
+    // 폴더 형태 글이면 원본 옆에 있던 그림을 함께 옮깁니다.
+    // 마크다운 원본은 산출물에 넣지 않습니다.
+    if (p.assetDir) {
+      for (const e of await readdir(p.assetDir, { withFileTypes: true })) {
+        if (/\.(md|markdown)$/i.test(e.name)) continue;
+        await cp(path.join(p.assetDir, e.name), path.join(dir, e.name), {
+          recursive: true,
+        });
+        copiedAssets++;
+      }
+    }
+
     // 목록은 최신순이라, 배열의 이전 칸이 더 새 글입니다.
     await writeFile(path.join(dir, "index.html"), postPage(p, posts[i + 1], posts[i - 1]));
   }
+  if (copiedAssets) say(`  글에 딸린 파일 ${copiedAssets}개를 함께 옮겼습니다`);
 
   const allTags = [...new Set(posts.flatMap((p) => p.tags))].sort();
   await writeFile(path.join(OUT, "index.html"), feedPage(posts, allTags));

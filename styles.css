@@ -1141,7 +1141,22 @@ kbd {
   padding-bottom: 0.4rem;
 }
 .carousel-track::-webkit-scrollbar { display: none; }
-.carousel-track.is-dragging { scroll-snap-type: none; cursor: grabbing; }
+
+/* 끄는 동안만 스냅을 끄고, 텍스트가 파랗게 잡히지 않게 선택을 막습니다. */
+.carousel-track.is-dragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* 카드 안의 링크·이미지가 네이티브 드래그로 딸려 나오지 않게 합니다.
+   (dragstart 도 JS 에서 막지만, 커서 모양과 선택은 CSS 가 정합니다) */
+.carousel-track img,
+.carousel-track a {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+.carousel-track img { pointer-events: none; }
 
 .bcard {
   flex: 0 0 min(82vw, 21rem);

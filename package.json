@@ -6,6 +6,8 @@
   "description": "m4ch77 개인 허브 + 글(writing) 정적 빌드",
   "scripts": {
     "build": "node build/build.mjs",
+    "dev": "node build/serve.mjs --build --watch",
+    "serve": "node build/serve.mjs",
     "clean": "rm -rf writing _site"
   },
   "engines": {
