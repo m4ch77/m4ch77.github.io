@@ -1,0 +1,25 @@
+# Cloudflare Worker 설정 (조회수)
+#
+# 처음 한 번만 이렇게 올립니다. views/ 폴더에서 실행하세요.
+#
+#   npx wrangler login                                  브라우저로 로그인
+#   npx wrangler d1 create m4ch77-views                  DB 만들기
+#     → 출력에 나오는 database_id 를 아래 빈칸에 붙여 넣습니다
+#   npx wrangler d1 execute m4ch77-views --remote --file=./schema.sql
+#   npx wrangler deploy
+#
+# 마지막에 나오는 주소(https://…workers.dev)를 알려주시면
+# 사이트에 붙이겠습니다.
+
+name = "m4ch77-views"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+
+# 조회수는 사람이 읽을 값이라 관측만 켜 둡니다.
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"              # worker.js 의 env.DB
+database_name = "m4ch77-views"
+database_id = ""            # ← wrangler d1 create 출력값을 넣어 주세요
