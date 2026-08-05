@@ -29,7 +29,20 @@ import { feedPage, postPage, rss, hubCards } from "./templates.mjs";
 import * as notion from "./notion.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const CONTENT = path.join(ROOT, "content", "writing");
+
+/* 글 원본은 두 곳에서 옵니다.
+
+     content/writing/   손으로 쓴 글. 동기화가 건드리지 않습니다.
+     content/notion/    Notion 동기화가 관리. 이 폴더만 지우고 다시 씁니다.
+
+   빌드는 둘을 합쳐 한 목록으로 냅니다. 폴더는 **출처를 나누는 것일 뿐**
+   주소에는 영향이 없습니다. 둘 다 /writing/<이름> 으로 나갑니다.
+   그래서 나중에 손글을 Notion 으로 옮겨도 링크가 깨지지 않습니다. */
+const CONTENT_DIRS = [
+  { dir: path.join(ROOT, "content", "writing"), origin: "손" },
+  { dir: path.join(ROOT, "content", "notion"), origin: "Notion" },
+];
+
 const OUT = path.join(ROOT, "writing");
 const KATEX_DIST = path.join(ROOT, "node_modules", "katex", "dist");
 
@@ -51,32 +64,57 @@ const problems = [];
    같은 이름의 폴더가 함께 나옵니다. 둘을 `이름/index.md` 와 `이름/` 로
    옮기면 그림 경로가 그대로 맞습니다. */
 async function findSources() {
-  if (!existsSync(CONTENT)) return [];
-
   const out = [];
-  for (const e of await readdir(CONTENT, { withFileTypes: true })) {
-    if (e.isFile() && /\.(md|markdown)$/i.test(e.name)) {
-      out.push({
-        slug: e.name.replace(/\.(md|markdown)$/i, ""),
-        file: path.join(CONTENT, e.name),
-        label: e.name,
-        dir: null,
-      });
-    } else if (e.isDirectory()) {
-      for (const name of ["index.md", "index.markdown"]) {
-        const p = path.join(CONTENT, e.name, name);
-        if (existsSync(p)) {
-          out.push({
-            slug: e.name,
-            file: p,
-            label: `${e.name}/${name}`,
-            dir: path.join(CONTENT, e.name),
-          });
-          break;
+  const seen = new Map(); // slug → 먼저 찾은 곳 (겹침 검사용)
+
+  for (const { dir: base, origin } of CONTENT_DIRS) {
+    if (!existsSync(base)) continue;
+
+    for (const e of await readdir(base, { withFileTypes: true })) {
+      let found = null;
+
+      if (e.isFile() && /\.(md|markdown)$/i.test(e.name)) {
+        found = {
+          slug: e.name.replace(/\.(md|markdown)$/i, ""),
+          file: path.join(base, e.name),
+          label: `${path.basename(base)}/${e.name}`,
+          dir: null,
+        };
+      } else if (e.isDirectory()) {
+        for (const name of ["index.md", "index.markdown"]) {
+          const p = path.join(base, e.name, name);
+          if (existsSync(p)) {
+            found = {
+              slug: e.name,
+              file: p,
+              label: `${path.basename(base)}/${e.name}/${name}`,
+              dir: path.join(base, e.name),
+            };
+            break;
+          }
         }
       }
+
+      if (!found) continue;
+      found.origin = origin;
+
+      /* 이름(=주소)이 겹치면 한쪽이 조용히 덮입니다. 멈추고 알려줍니다.
+         제목은 겹쳐도 괜찮습니다. 주소를 정하는 것은 이름뿐입니다. */
+      const prev = seen.get(found.slug);
+      if (prev) {
+        problems.push(
+          `이름이 겹칩니다 — "${found.slug}"\n` +
+            `      ${prev}\n` +
+            `      ${found.label}\n` +
+            `    이름이 그대로 주소가 되므로 둘 중 하나를 바꿔야 합니다.`,
+        );
+        continue;
+      }
+      seen.set(found.slug, found.label);
+      out.push(found);
     }
   }
+
   return out;
 }
 
@@ -137,6 +175,7 @@ async function loadPosts() {
     posts.push({
       slug: src.slug,
       label: src.label,
+      origin: src.origin,
       assetDir: src.dir,
       source: content,
       title: String(data.title),
@@ -233,7 +272,7 @@ async function main() {
     p.toc = out.toc;
     p.hasMath = out.hasMath;
     if (out.hasMath) mathCount++;
-    say(`  ${p.slug}  ${p.minutes}분  ${p.toc.length}절${out.hasMath ? "  수식" : ""}`);
+    say(`  ${p.slug}  [${p.origin}]  ${p.minutes}분  ${p.toc.length}절${out.hasMath ? "  수식" : ""}`);
   }
 
   say("▸ 쓰기");
