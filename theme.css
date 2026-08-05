@@ -28,9 +28,12 @@
      감속 곡선 하나로 통일합니다. 길이만 세 단계. */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
-  --t-fast: 180ms var(--ease);
-  --t: 400ms var(--ease);
-  --t-slow: 880ms var(--ease);
+  /* 전체적으로 한 단계 느리게 잡았습니다. 등장이 빨라서 무엇이 움직였는지
+     알아채기 전에 끝나는 문제가 있었습니다. 특히 TIL 잔디판처럼 큰 덩어리는
+     짧게 움직이면 눈에 걸리지 않습니다. */
+  --t-fast: 220ms var(--ease);
+  --t: 520ms var(--ease);
+  --t-slow: 1150ms var(--ease);
 
   /* 스크롤 스냅 애니메이션 (main.js 가 읽습니다) */
   --snap-duration: 700;

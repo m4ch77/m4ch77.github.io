@@ -296,13 +296,13 @@
       <div class="sec-head">
         <div>
           <p class="section-kicker" data-reveal><span class="num">01</span> <span data-en="Career">약력</span></p>
-          <h2 class="section-title" data-split="chars" data-flow>Where I've <span class="thin">Been</span></h2>
+          <h2 class="section-title" data-split="chars">Where I've <span class="thin">Been</span></h2>
         </div>
         <p class="section-tagline" data-reveal data-en="Where I have been, and what I have done.">지나온 자리와 기록입니다.</p>
       </div>
 
       <div class="tl-grid">
-        <ol class="timeline" data-flow>
+        <ol class="timeline" data-reveal="draw">
           <li data-reveal>
             <span class="tl-year">2026</span>
             <span class="tl-body">
@@ -328,7 +328,7 @@
 
         <div class="tl-side">
           <h3 class="sub-head" data-reveal data-en="Log">기록</h3>
-          <ul class="log-list" data-flow>
+          <ul class="log-list">
             <li data-reveal>
               <span class="log-kind" data-en="Talk">발표</span>
               <span class="log-title" data-en="Talk title placeholder">발표 제목 자리</span>
@@ -356,7 +356,7 @@
       <div class="sec-head">
         <div>
           <p class="section-kicker" data-reveal><span class="num">02</span> <span data-en="Blog">블로그</span></p>
-          <h2 class="section-title" data-split="chars" data-flow>What I <span class="thin">Wrote</span></h2>
+          <h2 class="section-title" data-split="chars" data-split-dir="x">What I <span class="thin">Wrote</span></h2>
           <p class="section-tagline" data-reveal data-en="Notes I have written.">쓴 글을 모아 둡니다.</p>
         </div>
         <div class="carousel-nav" data-reveal>
@@ -376,10 +376,23 @@
         <ul class="carousel-track" id="blog-track" tabindex="0" aria-label="블로그 글 목록 (가로 스크롤)" data-en-label="Blog posts (horizontal scroll)">
         <!-- build:posts:start -->
 
-          <li class="bcard" data-reveal>
-            <a class="bcard-hit" href="/writing/build-without-runtime-deps" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+          <li class="bcard" data-reveal="slide">
+            <a class="bcard-hit" href="/writing/toc-template" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
                 <img src="assets/cover-01.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+              </span>
+              <span class="bcard-body">
+                <span class="bcard-meta"><span class="bcard-date">2026.08.06</span><i>·</i><span>3<span data-en="min">분</span></span></span>
+                <span class="bcard-title">목차와 등장 모션 확인용 템플릿</span>
+                <span class="bcard-excerpt">오른쪽 목차의 계층 표시와 스크롤 스파이, 그리고 섹션별 등장 모션을 한 화면에서 보기 위한 글입니다.</span>
+                <span class="wr-tags"><span class="tag">#template</span><span class="tag">#ui</span></span>
+              </span>
+            </a>
+          </li>
+          <li class="bcard" data-reveal="slide">
+            <a class="bcard-hit" href="/writing/build-without-runtime-deps" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+              <span class="bcard-media">
+                <img src="assets/cover-02.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
               </span>
               <span class="bcard-body">
                 <span class="bcard-meta"><span class="bcard-date">2026.08.05</span><i>·</i><span>4<span data-en="min">분</span></span></span>
@@ -389,10 +402,10 @@
               </span>
             </a>
           </li>
-          <li class="bcard" data-reveal>
+          <li class="bcard" data-reveal="slide">
             <a class="bcard-hit" href="/writing/notion-test" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
-                <img src="assets/cover-02.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <img src="assets/cover-03.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
               </span>
               <span class="bcard-body">
                 <span class="bcard-meta"><span class="bcard-date">2026.08.04</span><i>·</i><span>1<span data-en="min">분</span></span></span>
@@ -402,10 +415,10 @@
               </span>
             </a>
           </li>
-          <li class="bcard" data-reveal>
+          <li class="bcard" data-reveal="slide">
             <a class="bcard-hit" href="/writing/scroll-motion" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
-                <img src="assets/cover-03.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <img src="assets/cover-04.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
               </span>
               <span class="bcard-body">
                 <span class="bcard-meta"><span class="bcard-date">2026.08.01</span><i>·</i><span>5<span data-en="min">분</span></span></span>
@@ -415,10 +428,10 @@
               </span>
             </a>
           </li>
-          <li class="bcard" data-reveal>
+          <li class="bcard" data-reveal="slide">
             <a class="bcard-hit" href="/writing/two-surfaces" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
-                <img src="assets/cover-04.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
+                <img src="assets/cover-05.svg" alt="" width="960" height="600" loading="lazy" decoding="async">
               </span>
               <span class="bcard-body">
                 <span class="bcard-meta"><span class="bcard-date">2026.07.26</span><i>·</i><span>4<span data-en="min">분</span></span></span>
@@ -457,7 +470,7 @@
       <div class="sec-head">
         <div>
           <p class="section-kicker" data-reveal><span class="num">03</span> TIL</p>
-          <h2 class="section-title" data-split="chars" data-flow>Today I <span class="thin">Learned</span></h2>
+          <h2 class="section-title" data-split="chars">Today I <span class="thin">Learned</span></h2>
           <p class="section-tagline" data-reveal data-en="One line for what I learn each day.">매일 배운 것을 한 줄로 남깁니다.</p>
         </div>
 
@@ -477,7 +490,7 @@
         </dl>
       </div>
 
-      <div class="til-heat-wrap" data-reveal>
+      <div class="til-heat-wrap" data-reveal="rise">
         <div class="til-heat" id="til-heat" aria-label="최근 기록 달력. 칸 하나가 하루입니다." data-en-label="Recent notes calendar. One cell is one day."></div>
         <p class="til-legend">
           <span class="tlg-scale">
@@ -495,7 +508,7 @@
         <button class="tf-clear" type="button" id="til-filter-clear" data-en="Show all">전체 보기</button>
       </p>
 
-      <ol class="til-list" id="til-list" data-flow>
+      <ol class="til-list" id="til-list">
         <li class="til-item" data-til="2026-08-01" data-reveal>
           <time class="til-date" datetime="2026-08-01"></time>
           <span class="til-body">
@@ -534,29 +547,29 @@
       <div class="sec-head">
         <div>
           <p class="section-kicker" data-reveal><span class="num">04</span> FAQ</p>
-          <h2 class="section-title" data-split="chars" data-flow>Frequently Asked <span class="thin">Questions</span></h2>
+          <h2 class="section-title" data-split="chars" data-split-dir="x">Frequently Asked <span class="thin">Questions</span></h2>
         </div>
         <p class="section-tagline" data-reveal data-en="Anything else, just email me.">여기에 없는 건 메일로 물어보시면 됩니다.</p>
       </div>
 
-      <div class="faq" data-flow>
-        <details class="faq-item" data-reveal>
+      <div class="faq">
+        <details class="faq-item" data-reveal="rise">
           <summary><span data-en="Where does the name m4ch77 come from?">닉네임 m4ch77은 어디서 왔나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
           <div class="faq-body"><p data-en="From the German word for power, and from Mach.">독일어로 '힘'을 뜻하는 말, 그리고 마하(Mach)에서 왔습니다.</p></div>
         </details>
-        <details class="faq-item" data-reveal>
+        <details class="faq-item" data-reveal="rise">
           <summary><span data-en="Where are the posts, and when does the resume open?">글은 어디 있고, 레쥬메는 언제 열리나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
           <div class="faq-body"><p data-en-html="Posts are already up at <span class=&quot;mono&quot;>/writing</span>. The resume comes next, at <span class=&quot;mono&quot;>resume.m4ch77.com</span>.">글은 이미 <span class="mono">/writing</span> 에 있습니다. 레쥬메가 그다음이고 <span class="mono">resume.m4ch77.com</span> 로 나갑니다.</p></div>
         </details>
-        <details class="faq-item" data-reveal>
+        <details class="faq-item" data-reveal="rise">
           <summary><span data-en="Is the source of this site public?">이 사이트 소스는 공개되어 있나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
           <div class="faq-body"><p data-en-html="Yes, it is on <a href=&quot;https://github.com/m4ch77&quot; rel=&quot;me noopener&quot; target=&quot;_blank&quot;>GitHub</a>."><a href="https://github.com/m4ch77" rel="me noopener" target="_blank">GitHub</a>에 공개되어 있습니다.</p></div>
         </details>
-        <details class="faq-item" data-reveal>
+        <details class="faq-item" data-reveal="rise">
           <summary><span data-en="Does the terminal actually work?">터미널은 실제로 동작하나요?</span><span class="faq-sign" aria-hidden="true"></span></summary>
           <div class="faq-body"><p data-en-html="It does. It sits on the right of the first screen. <code>ls</code> lists places, <code>open &lt;name&gt;</code> goes there. It shares its list with <kbd>⌘</kbd><kbd>K</kbd>. There is one hidden command too.">네. 첫 화면 오른쪽에 있습니다. <code>ls</code> 로 목록을 보고 <code>open &lt;이름&gt;</code> 으로 이동합니다. <kbd>⌘</kbd><kbd>K</kbd> 빠른 이동과 같은 목록을 씁니다. 숨은 명령어도 하나 있습니다.</p></div>
         </details>
-        <details class="faq-item" data-reveal>
+        <details class="faq-item" data-reveal="rise">
           <summary><span data-en="I found a security issue.">보안 이슈를 발견했습니다.</span><span class="faq-sign" aria-hidden="true"></span></summary>
           <div class="faq-body"><p data-en-html="Thank you. <a href=&quot;mailto:m4ch77@gmail.com&quot;>Please email me.</a> I would appreciate hearing from you before it goes public.">고맙습니다. <a href="mailto:m4ch77@gmail.com">메일로 알려주세요.</a> 공개 전에 먼저 연락 주시면 감사합니다.</p></div>
         </details>

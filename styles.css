@@ -165,11 +165,59 @@ kbd {
 .wi {
   display: inline-block;
   transform: translateY(115%);
-  transition: transform 1s var(--ease);
+  transition: transform 1.3s var(--ease);
   transition-delay: var(--d, 0ms);
 }
 .is-in .wi { transform: none; }
 .js [data-split]:not(.is-in) { pointer-events: none; }
+
+/* 단어·글자가 **왼쪽에서** 밀려 들어오는 변형.
+   :not(.is-in) 으로 범위를 좁힌 이유가 있습니다. 초기화 규칙인
+   `.is-in .wi` 와 특정도가 같아서, 그냥 쓰면 소스 순서에 밀려
+   글자가 제자리로 돌아오지 않습니다. */
+[data-split-dir="x"]:not(.is-in) .wi { transform: translateX(-110%); }
+
+/* ── 등장 변형 ─────────────────────────────────────────
+   섹션마다 다른 결로 나타나게 [data-reveal] 에 값을 줍니다.
+   JS 는 그대로 .is-in 만 붙이고 갈라지는 것은 여기서 합니다.
+   곡선은 --ease 하나만 씁니다 (design.md 5절). 길이만 다릅니다. */
+
+/* wipe ─ 왼쪽에서 오른쪽으로 닦아내며 나타납니다 (글 목록의 행)
+
+   clip-path 를 **관찰 대상 자신에게 걸면 안 됩니다.** 등장 처리는
+   IntersectionObserver 로 .is-in 을 붙이는데, 대상이 clip-path 로 완전히
+   가려지면 면적이 0 이라 "화면에 없다"고 보고됩니다. 그러면 .is-in 이
+   영원히 안 붙고, 안 붙으니 계속 가려집니다. 서로를 막습니다.
+   (실제로 이 버그를 냈고, 헤드리스로 DOM 을 찍어 확인했습니다.)
+
+   그래서 대상은 그대로 두고 **안쪽 자식만** 닦습니다. 대상은 높이를
+   유지하므로 관찰이 정상으로 돕니다.
+
+   끝 상태를 0 이 아니라 살짝 음수로 두는 이유: inset(0) 은 자기 경계에서
+   정확히 자르기 때문에 포커스 링이나 글자 획이 깎입니다. */
+.js [data-reveal="wipe"] { opacity: 1; transform: none; }
+.js [data-reveal="wipe"] > * {
+  clip-path: inset(-0.4em 100% -0.4em -0.4em);
+  transition: clip-path var(--t-slow);
+  transition-delay: var(--d, 0ms);
+}
+.js [data-reveal="wipe"].is-in > * { clip-path: inset(-0.4em -0.4em -0.4em -0.4em); }
+
+/* slide ─ 왼쪽에서 밀려 들어옵니다 (블로그 카드) */
+.js [data-reveal="slide"] { transform: translateX(-30px); }
+.js [data-reveal="slide"].is-in { transform: none; }
+
+/* rise ─ 아래에서 조금 더 크게, 조금 더 길게 (FAQ · TIL 잔디판)
+   큰 덩어리는 이동 거리가 짧으면 움직인 줄 모르고 지나갑니다. */
+.js [data-reveal="rise"] {
+  transform: translateY(56px);
+  transition-duration: 1.35s;
+}
+.js [data-reveal="rise"].is-in { transform: none; }
+
+/* draw ─ 자기 자신은 움직이지 않고, 세로선만 위에서 아래로 그립니다.
+   (약력 타임라인. 선을 그리는 규칙은 .timeline 쪽에 있습니다) */
+.js [data-reveal="draw"] { opacity: 1; transform: none; }
 
 /* ══ 4. 로더 ═════════════════════════════════════════════ */
 .loader {
@@ -1058,7 +1106,25 @@ kbd {
   .tl-side .sub-head { margin-top: 0; }
 }
 
-.timeline { position: relative; border-left: 1px solid var(--line); }
+/* 세로선을 테두리로 그리면 애니메이션을 걸 수 없습니다. 자리는 투명한
+   테두리가 그대로 잡아 두고(레이아웃 흔들림 0), 보이는 선은 ::before 로
+   그려서 위에서 아래로 내려오게 합니다. */
+.timeline { position: relative; border-left: 1px solid transparent; }
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+.js .timeline::before { transition: transform 1.5s var(--ease); }
+.timeline.is-in::before { transform: scaleY(1); }
+/* JS 가 없거나 모션을 끈 환경에서는 선이 처음부터 그려져 있어야 합니다. */
+html:not(.js) .timeline::before { transform: scaleY(1); }
 .timeline li {
   position: relative;
   display: grid;
@@ -1136,8 +1202,25 @@ kbd {
   display: flex;
   gap: var(--cgap);
   overflow-x: auto;
+
+  /* overflow-y 를 반드시 적어야 합니다.
+     비워두면 기본값 visible 이지만, overflow-x 가 auto 이면 브라우저가
+     overflow-y 를 **auto 로 계산**합니다(CSS overflow 스펙). 그러면 트랙이
+     의도치 않게 세로 스크롤 컨테이너가 되고, 포인터가 캐러셀 위에 있을 때
+     휠이 페이지보다 트랙을 먼저 굴립니다. 카드가 몇 px 밀려 위아래가
+     잘리고, 그 몇 px 이 끝에 닿아야 페이지가 움직여서 "걸리는" 느낌이
+     납니다. */
+  overflow-y: hidden;
+
+  /* 가로 끝에서 뒤로가기 제스처나 페이지 스크롤로 넘어가지 않게 */
+  overscroll-behavior-x: contain;
+
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
+
+  /* hover 에서 카드가 4px 뜹니다. overflow-y: hidden 이라 여유가 없으면
+     뜬 만큼 윗변이 잘립니다. 그만큼만 위를 열어 둡니다. */
+  padding-top: 6px;
   padding-bottom: 0.4rem;
 }
 .carousel-track::-webkit-scrollbar { display: none; }
@@ -1747,6 +1830,10 @@ button.til-cell.is-sel {
     transition-duration: 0.01ms !important;
   }
   .js [data-reveal] { opacity: 1; transform: none; }
+  /* clip-path 로 가리는 변형(wipe)은 transform 초기화로 풀리지 않습니다.
+     따로 열어 줘야 내용이 영영 안 보이는 일이 없습니다. */
+  .js [data-reveal="wipe"] > * { clip-path: none; }
+  .timeline::before { transform: scaleY(1); }
   .wi { transform: none; }
   .cursor { display: none !important; }
   .loader { display: none; }
@@ -1760,5 +1847,7 @@ button.til-cell.is-sel {
   [data-surface] { background: #fff !important; color: #000 !important; }
   .section { min-height: 0; padding-block: 1.5rem; }
   .js [data-reveal] { opacity: 1 !important; transform: none !important; }
+  .js [data-reveal="wipe"] > * { clip-path: none !important; }
+  .timeline::before { transform: scaleY(1) !important; }
   .wi { transform: none !important; }
 }

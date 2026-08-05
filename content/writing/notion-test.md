@@ -3,7 +3,7 @@
 Tags: notion, test
 Created: August 4, 2026
 Summary: Notion 에서 그대로 붙여넣은 문법이 제대로 나오는지 보는 글입니다.
-Draft: true
+Draft: false
 
 이 글은 **프런트매터가 없습니다.** 제목과 속성을 위쪽 Notion 형식에서
 읽어옵니다.

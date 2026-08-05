@@ -18,6 +18,11 @@
      16 터미널
      17 스크롤 정렬 (부드러운 스냅)
      18 잡동사니 (시계 · 연도 · 위로)
+     19 글 목록 태그 필터        (/writing)
+     20 글 목차 스크롤 스파이     (/writing/<이름>)
+
+   06d 에 있던 "스크롤 속도에 따라 기우는 글자"(data-flow)는 없앴습니다.
+   섹션별 등장 모션이 그 자리를 대신하고, 전부 CSS 입니다.
    ============================================================ */
 
 (function () {
@@ -593,7 +598,8 @@
       var p = el.parentElement;
       var n = seen.get(p) || 0;
       seen.set(p, n + 1);
-      el.style.setProperty("--d", Math.min(n, 8) * 65 + "ms");
+      // 형제 순서대로 지연. 전체 모션을 느리게 잡았으니 간격도 함께 늘립니다.
+      el.style.setProperty("--d", Math.min(n, 8) * 90 + "ms");
     });
 
     whenReady(function () {
@@ -677,46 +683,17 @@
     el.addEventListener("click", function () { run(); });
   })();
 
-  /* ══ 06d 스크롤 속도에 반응하는 글자 ═══════════════════
-     내리는 속도만큼 살짝 기울고, 멈추면 제자리로 돌아옵니다. */
-  (function flow() {
-    if (reduceMotion) return;
-    var els = $$("[data-flow]");
-    if (!els.length) return;
+  /* ══ 06d (없앰) 스크롤 속도에 반응하는 기울기 ════════════
+     data-flow 로 스크롤 속도만큼 skewY 를 걸던 모듈이 여기 있었습니다.
+     뺐습니다. 이유는 두 가지입니다.
 
-    var prevY = window.scrollY;
-    var target = 0;
-    var cur = 0;
-    var last = null;
-    var running = false;
+       · 기울기가 "고급스럽게" 읽히는 폭이 아주 좁고, 대부분은 글자가
+         출렁이는 렌더링 오류처럼 보입니다.
+       · 매 프레임 transform 을 쓰는 비용이 있습니다.
 
-    function write(v) {
-      var s = v === 0 ? "" : "skewY(" + v.toFixed(2) + "deg)";
-      if (s === last) return;   // 같은 값을 매 프레임 다시 쓰면 그것만으로 버벅입니다
-      last = s;
-      els.forEach(function (el) { el.style.transform = s; });
-    }
-
-    function tick() {
-      target *= 0.88;
-      cur += (target - cur) * 0.16;
-      if (Math.abs(cur) < 0.01 && Math.abs(target) < 0.01) {
-        cur = 0;
-        write(0);
-        running = false;   // 멈추면 루프도 멈춥니다
-        return;
-      }
-      write(cur);
-      requestAnimationFrame(tick);
-    }
-
-    window.addEventListener("scroll", function () {
-      var y = window.scrollY;
-      target = clamp((y - prevY) * 0.14, -2.2, 2.2);
-      prevY = y;
-      if (!running) { running = true; requestAnimationFrame(tick); }
-    }, { passive: true });
-  })();
+     대신 섹션마다 다른 등장 모션을 넣었습니다. 전부 CSS 이고,
+     [data-reveal] 의 값(wipe · slide · rise · draw · fill)으로 갈립니다.
+     JS 는 기존처럼 .is-in 만 붙입니다. styles.css 3절을 보세요. */
 
   /* ══ 06e 이스터에그 ─ mach 버스트 ══════════════════════
      터미널의 숨은 명령어, 또는 코나미 코드로 실행됩니다. */
@@ -2666,5 +2643,57 @@
     } else {
       whenReady(lock);
     }
+  })();
+
+  /* ══ 20 글 목차 — 지금 읽는 절 표시 ═════════════════════
+     목차가 장식이 아니라 위치 표시기가 되게 합니다.
+     계층은 CSS(패딩·서체·안내선)가 보여주고, 여기서는 "어디쯤인지"만
+     맡습니다. 표시는 aria-current 로 붙여서 화면과 스크린리더가 같은
+     것을 알게 합니다. 글 페이지가 아니면 조용히 빠집니다. */
+  (function tocSpy() {
+    var toc = $(".wr-toc");
+    if (!toc) return;
+
+    var items = $$("a[href^='#']", toc).map(function (a) {
+      var id = a.getAttribute("href").slice(1);
+      try { id = decodeURIComponent(id); } catch (e) {}
+      return { a: a, el: document.getElementById(id) };
+    }).filter(function (o) { return o.el; });
+
+    if (!items.length) return;
+
+    var current = null;
+
+    function mark(next) {
+      if (current === next) return;
+      if (current) current.a.removeAttribute("aria-current");
+      current = next;
+      if (!next) return;
+      next.a.setAttribute("aria-current", "true");
+
+      // 목차 자체가 길어 스크롤될 때, 활성 항목이 화면 밖이면 끌어옵니다.
+      if (toc.scrollHeight > toc.clientHeight + 4) {
+        var r = next.a.getBoundingClientRect();
+        var t = toc.getBoundingClientRect();
+        if (r.top < t.top + 8 || r.bottom > t.bottom - 8) {
+          toc.scrollTop += r.top - t.top - toc.clientHeight * 0.35;
+        }
+      }
+    }
+
+    var onScroll = rafLoop(function () {
+      // 헤더 아래로 지나간 마지막 제목이 "지금 읽는 절"입니다.
+      var line = (header ? header.offsetHeight : 0) + 24;
+      var found = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top - line <= 0) found = items[i];
+      }
+      // 첫 제목에 아직 닿지 않았으면 첫 항목을 켜 둡니다.
+      mark(found || items[0]);
+    });
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    onScroll();
   })();
 })();

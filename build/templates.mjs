@@ -148,7 +148,7 @@ const FOOTER = `<footer class="footer" data-surface="2">
       <dl class="fc-meta">
         <div><dt data-en="Reply">응답</dt><dd data-en="usually within 24h">보통 24시간 내</dd></div>
         <div><dt data-en="Timezone">시간대</dt><dd>KST · UTC+9</dd></div>
-        <div><dt data-en="Feed">피드</dt><dd><a href="/writing/rss.xml">RSS</a></dd></div>
+        <div><dt data-en="Subscribe">구독</dt><dd><a href="/writing/rss.xml">RSS 구독</a></dd></div>
       </dl>
     </div>
 
@@ -241,11 +241,20 @@ const tagList = (tags) =>
 
 /* ══ 글 목록 (테크 피드) ═══════════════════════════════════ */
 export function feedPage(posts, allTags) {
+  /* 목록 행의 결을 두 가지로 둡니다 — 보고 고르시라고 일부러 섞었습니다.
+       1번째 글  is-card : 좌우 패딩과 radius 가 있는 카드형.
+                          커서 프레임이 붙을 형태가 있어서 테두리가 맞습니다.
+       2번째부터 is-text : 테두리 없는 텍스트형.
+                          커서 프레임(data-cursor-box)을 붙이지 않습니다.
+                          붙이면 각진 사각형이 글자에 딱 붙어 어색합니다.
+     정하시면 한쪽만 남기고 이 분기를 지웁니다. */
   const items = posts
-    .map(
-      (p) => `
-        <li class="wr-item" data-reveal data-tags="${esc((p.tags || []).join(" "))}">
-          <a class="wr-hit" href="/writing/${esc(p.slug)}" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
+    .map((p, i) => {
+      const variant = i === 0 ? "card" : "text";
+      const box = variant === "card" ? " data-cursor-box" : "";
+      return `
+        <li class="wr-item is-${variant}" data-reveal="wipe" data-tags="${esc((p.tags || []).join(" "))}">
+          <a class="wr-hit" href="/writing/${esc(p.slug)}" data-cursor-label="읽기" data-cursor-label-en="Read"${box}>
             <span class="wr-meta">
               <time class="wr-date" datetime="${esc(p.date)}">${fmtDate(p.date)}</time>
               <i>·</i>
@@ -256,8 +265,8 @@ export function feedPage(posts, allTags) {
             <span class="wr-excerpt">${esc(p.summary)}</span>
             ${tagList(p.tags)}
           </a>
-        </li>`,
-    )
+        </li>`;
+    })
     .join("");
 
   const filters = allTags
@@ -268,7 +277,7 @@ export function feedPage(posts, allTags) {
   <div class="wr-head" data-surface="1" data-section="글" data-section-en="Writing" id="writing">
     <div class="shell">
       <p class="section-kicker" data-reveal><span class="num">01</span> <span data-en="Writing">글</span></p>
-      <h1 class="section-title" data-split="chars" data-flow>What I <span class="thin">Wrote</span></h1>
+      <h1 class="section-title" data-split="chars" data-split-dir="x">What I <span class="thin">Wrote</span></h1>
       <p class="section-tagline" data-reveal data-en="Notes on what I built and what broke.">만든 것과 부서진 것에 대한 기록입니다.</p>
 
       <div class="wr-bar" data-reveal>
@@ -287,7 +296,7 @@ export function feedPage(posts, allTags) {
   <div class="wr-body" data-surface="2" data-section="목록" data-section-en="Posts" id="list">
     <div class="shell">
       ${posts.length
-        ? `<ol class="wr-list" id="wr-list" data-flow>${items}</ol>
+        ? `<ol class="wr-list" id="wr-list">${items}</ol>
            <p class="wr-empty" id="wr-empty" hidden data-en="No posts with that tag.">그 태그로는 글이 없습니다.</p>`
         : `<p class="wr-empty" data-en="Nothing published yet. Add a markdown file under content/writing/.">아직 올린 글이 없습니다. content/writing/ 에 마크다운을 하나 넣어보세요.</p>`}
     </div>
@@ -320,14 +329,21 @@ export function postPage(post, prev, next) {
        </nav>`
     : "";
 
+  /* 왼쪽이 지난 글, 오른쪽이 최신 글입니다. 시간축을 왼→오로 둡니다.
+     화살표 의미(← →)와 브라우저 뒤로·앞으로가 같은 방향을 가리키므로
+     이 배치가 헷갈리지 않습니다. 라벨도 "이전/다음" 대신 "지난/최신"
+     으로 두어 시간 기준임을 분명히 했습니다. */
+  const arrowL = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8H4M7.5 4.5 4 8l3.5 3.5"/></svg>';
+  const arrowR = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg>';
+
   const nav = (prev || next)
     ? `<nav class="wr-adj" aria-label="다른 글" data-en-label="Other posts">
-         ${next ? `<a class="wr-adj-item" href="/writing/${esc(next.slug)}" data-cursor-box>
-            <span class="wr-adj-key" data-en="Newer">다음 글</span>
-            <span class="wr-adj-title">${esc(next.title)}</span></a>` : "<span></span>"}
-         ${prev ? `<a class="wr-adj-item is-prev" href="/writing/${esc(prev.slug)}" data-cursor-box>
-            <span class="wr-adj-key" data-en="Older">이전 글</span>
+         ${prev ? `<a class="wr-adj-item is-older" href="/writing/${esc(prev.slug)}" data-cursor-box>
+            <span class="wr-adj-key">${arrowL}<span data-en="Older">지난 글</span></span>
             <span class="wr-adj-title">${esc(prev.title)}</span></a>` : "<span></span>"}
+         ${next ? `<a class="wr-adj-item is-newer" href="/writing/${esc(next.slug)}" data-cursor-box>
+            <span class="wr-adj-key"><span data-en="Newer">최신 글</span>${arrowR}</span>
+            <span class="wr-adj-title">${esc(next.title)}</span></a>` : "<span></span>"}
        </nav>`
     : "";
 
@@ -347,7 +363,7 @@ export function postPage(post, prev, next) {
           <i>·</i><span>${post.minutes}<span data-en="min">분</span></span>
           ${post.updated ? `<i>·</i><span data-en="updated ${fmtDate(post.updated)}">${fmtDate(post.updated)} 고침</span>` : ""}
         </p>
-        <h1 class="wr-h1" data-split="words" data-flow>${esc(post.title)}</h1>
+        <h1 class="wr-h1" data-split="words" data-split-dir="x">${esc(post.title)}</h1>
         ${post.summary ? `<p class="wr-lede" data-reveal>${esc(post.summary)}</p>` : ""}
         ${post.tags?.length ? `<p class="wr-hero-tags" data-reveal>${tagList(post.tags)}</p>` : ""}
       </header>
@@ -427,7 +443,7 @@ export function hubCards(posts) {
     .slice(0, 6)
     .map(
       (p) => `
-          <li class="bcard" data-reveal>
+          <li class="bcard" data-reveal="slide">
             <a class="bcard-hit" href="/writing/${esc(p.slug)}" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
               <span class="bcard-media">
                 <img src="${esc(p.cover)}" alt="" width="960" height="600" loading="lazy" decoding="async">
