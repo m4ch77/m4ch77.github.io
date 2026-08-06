@@ -4,6 +4,7 @@ date: 2026-08-06
 summary: "summary test"
 tags: ["css"]
 updated: 2026-08-06
+draft: true
 # 이 파일은 Notion 에서 만들어졌습니다. 직접 고치면 다음 동기화에 덮입니다.
 # 원본: https://app.notion.com/p/test-3b4830f66e3d80cc88e5c7fa65fae664
 ---
