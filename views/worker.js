@@ -21,13 +21,24 @@
    위해서입니다. 서버는 명백한 크롤러만 걸러냅니다.
    ============================================================ */
 
-const ALLOWED_ORIGINS = [
-  "https://m4ch77.com",
-  "https://www.m4ch77.com",
-  "https://m4ch77.github.io",
-  "http://127.0.0.1:4173",
-  "http://localhost:4173",
-];
+/* 우리 사이트에서 온 요청만 셉니다.
+   목록을 딱 고정해 뒀다가 임시 Amplify 주소(main.<앱id>.amplifyapp.com)를
+   빠뜨려서, 그 주소로 볼 때 브라우저가 응답을 버리고 조회수가 안 보였습니다.
+   그래서 목록 대신 규칙으로 판단합니다. */
+const FALLBACK_ORIGIN = "https://m4ch77.com";
+
+function isOurs(origin) {
+  if (!origin) return true; // 같은 출처이거나 브라우저가 아닌 도구
+  return (
+    origin === "https://m4ch77.com" ||
+    origin === "https://www.m4ch77.com" ||
+    origin === "https://m4ch77.github.io" ||
+    // Amplify 가 주는 임시·미리보기 주소 (…​.amplifyapp.com)
+    /^https:\/\/[a-z0-9.-]+\.amplifyapp\.com$/i.test(origin) ||
+    // 로컬 미리보기 (포트는 바뀔 수 있습니다)
+    /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(origin)
+  );
+}
 
 /* 아무 경로나 넣어 표를 더럽히지 못하게 형태를 제한합니다.
    글 주소와 홈만 받습니다. */
@@ -37,7 +48,7 @@ const PATH_OK = /^\/(?:|writing\/[a-z0-9]+(?:-[a-z0-9]+)*)$/;
 const BOT = /bot|crawl|spider|slurp|preview|fetch|monitor|curl|wget|headless|lighthouse|pagespeed|python-requests|axios|okhttp/i;
 
 function cors(origin) {
-  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allow = isOurs(origin) && origin ? origin : FALLBACK_ORIGIN;
   return {
     "access-control-allow-origin": allow,
     "access-control-allow-methods": "GET, POST, OPTIONS",
@@ -96,7 +107,7 @@ export default {
     }
 
     // 우리 사이트에서 온 요청만 셉니다.
-    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    if (!isOurs(origin)) {
       return json({ error: "forbidden" }, origin, 403);
     }
 

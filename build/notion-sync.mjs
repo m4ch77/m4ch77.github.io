@@ -42,7 +42,15 @@ const SOURCE = process.env.NOTION_DATA_SOURCE_ID || "";
 const DRY = process.argv.includes("--dry-run");
 
 const API = "https://api.notion.com/v1";
-const VERSION = "2022-06-28";
+
+/* 버전을 2025-09-03 로 둡니다.
+   이 버전에서 "데이터베이스"와 "데이터 소스"가 분리됐고, /data_sources/…/query
+   가 생겼습니다. 그 전 버전(2022-06-28)으로 부르면 invalid_request_url 이
+   납니다. 실제로 그 오류를 냈습니다.
+
+   마크다운 엔드포인트는 걱정하지 않아도 됩니다. 공식 문서에 "새 엔드포인트
+   같은 추가적 변경은 모든 버전에 동시에 적용된다"고 되어 있습니다. */
+const VERSION = "2025-09-03";
 
 const say = (...a) => console.log(...a);
 const die = (msg) => {
@@ -78,7 +86,7 @@ const readTags = (p) => {
   return [];
 };
 
-async function notion(pathname, init = {}) {
+async function notion(pathname, init = {}, { soft = false } = {}) {
   const res = await fetch(API + pathname, {
     ...init,
     headers: {
@@ -91,6 +99,8 @@ async function notion(pathname, init = {}) {
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    // soft 는 "이 실패는 예상된 것이니 호출한 쪽이 처리한다" 는 뜻입니다.
+    if (soft) return { __error: true, status: res.status, body };
     if (res.status === 401) {
       die(
         "Notion 이 토큰을 거절했습니다 (401).\n" +
@@ -113,6 +123,38 @@ async function notion(pathname, init = {}) {
 
 /* ── 1. 발행된 글 목록 ─────────────────────────────────── */
 async function listPosts() {
+  /* 주신 ID 가 "데이터 소스" 인지 "데이터베이스" 인지에 따라 엔드포인트가
+     다릅니다. 어느 쪽인지 물어보는 대신 데이터 소스로 먼저 시도하고,
+     아니면 데이터베이스로 넘어갑니다. 어느 쪽으로 통했는지 찍어 둡니다. */
+  let endpoint = `/data_sources/${SOURCE}/query`;
+
+  const probe = await notion(endpoint, {
+    method: "POST",
+    body: JSON.stringify({ page_size: 1 }),
+  }, { soft: true });
+
+  if (probe.__error) {
+    const fallback = `/databases/${SOURCE}/query`;
+    const probe2 = await notion(fallback, {
+      method: "POST",
+      body: JSON.stringify({ page_size: 1 }),
+    }, { soft: true });
+
+    if (probe2.__error) {
+      die(
+        `Notion 이 이 ID 로는 조회할 수 없다고 합니다.\n` +
+          `  데이터 소스로 시도: ${probe.status} ${probe.body.slice(0, 160)}\n` +
+          `  데이터베이스로 시도: ${probe2.status} ${probe2.body.slice(0, 160)}\n\n` +
+          `  확인할 것\n` +
+          `   1. ID 가 맞는지 — DB → ··· → 데이터 소스 관리 → 데이터 소스 ID 복사\n` +
+          `   2. DB 를 통합에 연결했는지 — DB 페이지 → ··· → 연결 → 통합 이름 검색\n` +
+          `      (추천 목록의 Google Drive / GitHub 풀 리케스트가 아닙니다)`,
+      );
+    }
+    endpoint = fallback;
+    say("  (데이터베이스 엔드포인트로 조회합니다)");
+  }
+
   const pages = [];
   let cursor;
 
@@ -123,7 +165,7 @@ async function listPosts() {
     // 필터를 API 로 걸지 않고 전부 받아 우리가 고릅니다. 속성 이름이
     // 한국어일 수도 영어일 수도 있어서, 필터를 걸면 이름이 틀렸을 때
     // 조용히 0건이 됩니다. 그건 디버깅이 어렵습니다.
-    const res = await notion(`/data_sources/${SOURCE}/query`, {
+    const res = await notion(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
     });
