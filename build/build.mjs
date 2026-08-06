@@ -135,8 +135,14 @@ async function loadPosts() {
     const fm = matter(raw);
     const hasFrontmatter = Object.keys(fm.data).length > 0;
 
-    // Notion 표기를 표준 마크다운으로 고칩니다 (수식 · 콜아웃 · 색 · 경로).
-    const norm = notion.normalize(fm.content, { hasFrontmatter });
+    /* Notion 표기를 표준 마크다운으로 고칩니다 (수식 · 콜아웃 · 색 · 경로).
+
+       demote 는 Notion 에서 내려온 글에만 켭니다. Notion 제목 1단계를
+       h2 로 낮춰서, 글 제목(h1)과 겹치지 않고 목차에도 오르게 합니다. */
+    const norm = notion.normalize(fm.content, {
+      hasFrontmatter,
+      demote: src.origin === "Notion",
+    });
 
     // 프런트매터 > Notion 속성 순으로 합칩니다.
     const data = { ...norm.data, ...fm.data };

@@ -473,9 +473,22 @@ export function hubCards(posts) {
     )
     .join("");
 
-  /* 마지막에 "글 전체 보기" 칸을 두었다가 뺐습니다.
-     캐러셀의 카드가 이미 각 글로 가고, 섹션 제목(What I Wrote)이 목록으로
-     가는 문입니다. 같은 곳으로 가는 세 번째 입구는 군더더기였습니다. */
+  /* 마지막 칸은 목록으로 가는 문입니다. 앞의 여섯 칸이 최신 글,
+     일곱 번째 칸이 /writing 입니다. 칸 수를 일정하게 두려고 글은 6편으로
+     자릅니다 — 글이 늘어도 캐러셀 길이는 그대로입니다.
+
+     (한 번 뺐다가 되돌렸습니다. 제목 밑에 있던 작은 링크를 빼는 것이
+     본래 요청이었고, 그 링크는 이미 없습니다.) */
   return `${cards}
+
+          <li class="bcard bcard-more" data-reveal>
+            <a class="bcard-hit" href="/writing" data-cursor-label="목록" data-cursor-label-en="Index" data-cursor-box>
+              <span class="bcard-more-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16"><path d="M4 12 12 4M6 4h6v6"/></svg>
+              </span>
+              <span class="bcard-more-title" data-en="Read all posts">글 전체 보기</span>
+              <span class="bcard-more-sub">m4ch77.com/writing</span>
+            </a>
+          </li>
 `;
 }

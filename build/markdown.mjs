@@ -129,12 +129,18 @@ export function render(md, source) {
   const tokens = md.parse(source, env);
   const html = md.renderer.render(tokens, md.options, env);
 
-  // 목차 — h2/h3 만 씁니다. 그 아래까지 넣으면 목차가 본문만큼 길어집니다.
+  /* 목차 — h2·h3·h4 까지 씁니다. h5 아래는 넣지 않습니다. 그 아래까지
+     넣으면 목차가 본문만큼 길어집니다.
+
+     h4 를 넣는 이유: Notion 글은 제목을 한 단계 낮춰 들어옵니다
+     (Notion 제목1→h2, 2→h3, 3→h4). h3 까지만 보면 Notion 의 3단계
+     제목이 목차에서 빠집니다. 손으로 쓴 글은 h4 를 쓰지 않으므로
+     기존 글의 목차는 그대로입니다. */
   const toc = [];
   for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i];
     if (t.type !== "heading_open") continue;
-    if (t.tag !== "h2" && t.tag !== "h3") continue;
+    if (t.tag !== "h2" && t.tag !== "h3" && t.tag !== "h4") continue;
     const inline = tokens[i + 1];
     if (!inline) continue;
     const text = inline.children

@@ -187,6 +187,67 @@ async function fetchMarkdown(pageId) {
 /* ── 3. 그림 내려받기 ───────────────────────────────────
    Notion 이 주는 파일 주소는 **1시간 뒤 만료**됩니다(공식 문서).
    그대로 마크다운에 남기면 한 시간 뒤 전부 깨집니다. 받아서 커밋합니다. */
+
+/* Notion 은 그림 주소를 두 가지로 줍니다.
+
+     원본   https://prod-files-secure.s3.…/…?X-Amz-…
+     프록시 https://www.notion.so/image/<원본을 인코딩한 것>?…&width=1420
+
+   프록시로 오면 width 만큼 **줄인** 그림이 옵니다. 그대로 받으면 원본보다
+   흐립니다. 그래서 크기 관련 매개변수를 떼고 한 번 시도합니다.
+   실패하면 원래 주소로 되돌아갑니다 (서명이 걸려 있을 수도 있으니까요). */
+function fullSizeUrl(url) {
+  if (!/\/\/(?:www\.)?notion\.so\/image\//i.test(url)) return null;
+  try {
+    const u = new URL(url);
+    let touched = false;
+    for (const k of ["width", "w", "quality", "q"]) {
+      if (u.searchParams.has(k)) { u.searchParams.delete(k); touched = true; }
+    }
+    return touched ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/* 받은 그림의 실제 크기를 헤더에서 읽습니다. 의존성 없이, 화질 이야기를
+   눈이 아니라 숫자로 하려는 것입니다. 못 읽으면 null 을 돌려줍니다. */
+function pixelSize(buf) {
+  try {
+    // PNG
+    if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) {
+      return [buf.readUInt32BE(16), buf.readUInt32BE(20)];
+    }
+    // GIF
+    if (buf.length > 10 && buf.toString("latin1", 0, 3) === "GIF") {
+      return [buf.readUInt16LE(6), buf.readUInt16LE(8)];
+    }
+    // WebP (확장 헤더가 있는 것만)
+    if (
+      buf.length > 30 &&
+      buf.toString("latin1", 0, 4) === "RIFF" &&
+      buf.toString("latin1", 8, 12) === "WEBP" &&
+      buf.toString("latin1", 12, 16) === "VP8X"
+    ) {
+      return [1 + buf.readUIntLE(24, 3), 1 + buf.readUIntLE(27, 3)];
+    }
+    // JPEG — 프레임 시작(SOF) 마커까지 따라갑니다
+    if (buf.length > 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+      let i = 2;
+      while (i + 9 < buf.length) {
+        if (buf[i] !== 0xff) { i++; continue; }
+        const marker = buf[i + 1];
+        const isSOF =
+          marker >= 0xc0 && marker <= 0xcf &&
+          marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+        if (isSOF) return [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)];
+        i += 2 + buf.readUInt16BE(i + 2);
+      }
+    }
+  } catch {}
+  return null;
+}
+
 async function downloadAssets(markdown, dir, slug) {
   const urls = [...markdown.matchAll(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g)];
   if (!urls.length) return { markdown, count: 0 };
@@ -199,7 +260,15 @@ async function downloadAssets(markdown, dir, slug) {
     if (!/(amazonaws\.com|notion-static\.com|notion\.so|prod-files)/i.test(url)) continue;
 
     try {
-      const res = await fetch(url);
+      /* 원본 크기로 먼저 시도하고, 안 되면 준 주소 그대로 받습니다. */
+      const bigger = fullSizeUrl(url);
+      let from = bigger || url;
+      let res = await fetch(from);
+      if (!res.ok && bigger) {
+        say(`    (원본 크기 요청이 ${res.status} 라서 준 주소로 받습니다)`);
+        from = url;
+        res = await fetch(from);
+      }
       if (!res.ok) throw new Error("HTTP " + res.status);
       const buf = Buffer.from(await res.arrayBuffer());
 
@@ -217,6 +286,19 @@ async function downloadAssets(markdown, dir, slug) {
         await mkdir(dir, { recursive: true });
         await writeFile(path.join(dir, name), buf);
       }
+
+      /* 어디서 얼마나 큰 것을 받았는지 남깁니다. "화질이 안 좋다" 는
+         이야기를 눈이 아니라 숫자로 확인하려는 것입니다. 프록시로 왔다면
+         Notion 이 줄인 것이고, 원본 주소로 왔는데도 작다면 올릴 때
+         이미 줄어든 것입니다. */
+      const size = pixelSize(buf);
+      const host = (() => { try { return new URL(from).host; } catch { return "?"; } })();
+      const via = /notion\.so\/image/i.test(from) ? " 프록시" : " 원본주소";
+      say(
+        `    그림  ${name}  ${size ? size[0] + "×" + size[1] : "크기 불명"}` +
+          `  ${Math.round(buf.length / 1024)}KB  ← ${host}${via}`,
+      );
+
       out = out.split(url).join(name);
       n++;
     } catch (e) {

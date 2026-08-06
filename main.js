@@ -940,7 +940,10 @@
       cards.forEach(function (card, i) {
         var b = document.createElement("button");
         b.type = "button";
-        b.setAttribute("aria-label", t(i + 1 + "번째 글로", "Go to post " + (i + 1)));
+        // 마지막 칸은 글이 아니라 목록으로 가는 문이라 이름을 달리 읽어 줍니다.
+        b.setAttribute("aria-label", card.classList.contains("bcard-more")
+          ? t("글 전체 보기 칸으로", "Go to the all-posts card")
+          : t(i + 1 + "번째 글로", "Go to post " + (i + 1)));
         b.addEventListener("click", function () { goTo(i); });
         dotsWrap.appendChild(b);
         dots.push(b);

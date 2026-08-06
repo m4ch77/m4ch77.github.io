@@ -309,7 +309,9 @@
    글자("-")로 넣지 않은 이유: 스크린리더가 항목마다 읽어 버립니다.
    1px 도형이라 소리로는 안 나가고 눈에만 보입니다. */
 .wr-toc li.lv3 { padding-left: 0.95rem; }
-.wr-toc li.lv3 > a::before {
+.wr-toc li.lv4 { padding-left: 1.9rem; }
+.wr-toc li.lv3 > a::before,
+.wr-toc li.lv4 > a::before {
   content: "";
   display: inline-block;
   width: 0.5em;
@@ -318,6 +320,8 @@
   vertical-align: middle;
   background: var(--line2);
 }
+/* 3단은 같은 표시를 더 짧고 흐리게 — 단계는 패딩이 말해 줍니다. */
+.wr-toc li.lv4 > a::before { width: 0.32em; opacity: 0.6; }
 
 .wr-toc a {
   display: block;

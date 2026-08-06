@@ -318,7 +318,34 @@ export function parseLooseDate(raw) {
   return null;
 }
 
-/* ── 5. 넘어간 Notion 태그 찾기 ──────────────────────────
+/* ── 5. 제목 한 단계 낮추기 ───────────────────────────────
+   Notion 의 제목은 1·2·3 단계뿐이고, 사람들은 그중 1단계를 절 제목으로
+   씁니다(가장 큰 것이니까요). 그걸 그대로 h1 으로 내면 두 가지가 깨집니다.
+
+     · 글 제목이 이미 h1 입니다. h1 이 둘이 되면 문서 구조가 망가집니다.
+     · 목차는 h2·h3 만 봅니다. 그래서 Notion 1단계 제목이 목차에서
+       사라집니다. 실제로 "노션에서 제목을 넣었는데 목차에 없다" 는
+       현상이 이것이었습니다.
+
+   그래서 Notion 에서 온 글만 한 단계씩 낮춥니다.
+
+     Notion 제목1 → h2   목차 1단
+     Notion 제목2 → h3   목차 2단
+     Notion 제목3 → h4   목차 3단
+
+   손으로 쓴 글(content/writing/)은 건드리지 않습니다. 거기서는 ## 부터
+   쓰는 것이 이미 규칙이고, 실제로 그렇게 쓰여 있습니다. */
+export function demoteHeadings(src) {
+  const guard = protectCode(src);
+  // #{1,5} — h6 는 더 내릴 곳이 없으니 그대로 둡니다.
+  const text = guard.text.replace(
+    /^([ \t]{0,3})(#{1,5})(?=\s)/gm,
+    (m, indent, hashes) => indent + hashes + "#",
+  );
+  return guard.restore(text);
+}
+
+/* ── 6. 넘어간 Notion 태그 찾기 ──────────────────────────
    Notion 은 블록 표기를 계속 늘립니다. 우리가 모르는 태그가 오면
    markdown-it 이 모르는 HTML 로 흘려보내고, 결국 방문자 화면에 글자로
    박힙니다. <empty-block/> 이 정확히 그랬습니다.
@@ -337,7 +364,7 @@ function leftoverTags(text) {
 /* ── 전체 파이프라인 ─────────────────────────────────────
    프런트매터(---)를 이미 쓴 글은 그대로 존중하고, 없으면 Notion 식으로
    제목과 속성을 뽑습니다. */
-export function normalize(source, { hasFrontmatter }) {
+export function normalize(source, { hasFrontmatter, demote = false }) {
   const guard = protectCode(source);
   let text = guard.text;
 
@@ -351,7 +378,10 @@ export function normalize(source, { hasFrontmatter }) {
 
   text = guard.restore(text);
 
+  /* 제목 낮추기는 프런트매터를 뽑은 **뒤에** 해야 합니다. 프런트매터가
+     없는 글은 첫 줄의 "# 제목" 이 글 제목이고, 먼저 낮추면 그걸 못 찾습니다. */
   const out = hasFrontmatter ? { data: {}, body: text } : extractFrontmatter(text);
+  if (demote) out.body = demoteHeadings(out.body);
   out.leftover = leftover;
   return out;
 }
