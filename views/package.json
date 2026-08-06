@@ -9,7 +9,9 @@
     "db:create": "wrangler d1 create m4ch77-views",
     "db:init": "wrangler d1 execute m4ch77-views --remote --file=./schema.sql",
     "db:peek": "wrangler d1 execute m4ch77-views --remote --command=\"SELECT path, count FROM views ORDER BY count DESC LIMIT 20\"",
-    "deploy": "wrangler deploy",
+    "db:reset": "wrangler d1 execute m4ch77-views --remote --command=\"DELETE FROM views\"",
+    "check": "node --check worker.js && wrangler deploy --dry-run --outdir=.wrangler/dry",
+    "deploy": "npm run check && wrangler deploy",
     "tail": "wrangler tail"
   },
   "devDependencies": {
