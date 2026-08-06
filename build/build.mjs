@@ -142,6 +142,17 @@ async function loadPosts() {
     const data = { ...norm.data, ...fm.data };
     const content = norm.body;
 
+    /* 우리가 아직 모르는 Notion 태그가 있으면 알려줍니다. 멈추지는
+       않습니다 — 글이 안 나가는 것보다 조금 어색하게라도 나가는 게
+       낫습니다. 대신 무엇을 더 다뤄야 하는지 남깁니다. */
+    if (norm.leftover?.length) {
+      say(
+        `  ! ${src.label} — 아직 다루지 않는 Notion 태그: ` +
+          norm.leftover.map((t) => `<${t}>`).join(" ") +
+          " (build/notion.mjs 에 규칙을 더해야 합니다)",
+      );
+    }
+
     if (!SLUG_OK.test(src.slug)) {
       problems.push(
         `${src.label} — 이름은 소문자·숫자·하이픈만 쓸 수 있습니다 (주소가 되는 값입니다). 예: scroll-motion`,

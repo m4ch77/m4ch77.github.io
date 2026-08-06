@@ -940,10 +940,7 @@
       cards.forEach(function (card, i) {
         var b = document.createElement("button");
         b.type = "button";
-        var name = card.classList.contains("bcard-more")
-          ? t("더보기 칸으로", "Go to the more card")
-          : t(i + 1 + "번째 글로", "Go to post " + (i + 1));
-        b.setAttribute("aria-label", name);
+        b.setAttribute("aria-label", t(i + 1 + "번째 글로", "Go to post " + (i + 1)));
         b.addEventListener("click", function () { goTo(i); });
         dotsWrap.appendChild(b);
         dots.push(b);
@@ -1022,30 +1019,40 @@
        삼키게 했는데, 클릭이 오지 않으면 그 리스너가 남아서 **다음에
        진짜로 누른 클릭**을 삼켰습니다. 이제는 시간으로 판단합니다. */
     if (canHover) {
-      var dragging = false, moved = 0, x0 = 0, s0 = 0, pid = null;
+      var DRAG = 6; // 이만큼 넘게 움직이면 "끈 것"으로 봅니다
+      var dragging = false, moved = 0, x0 = 0, s0 = 0;
       var suppressUntil = 0;
 
       // 네이티브 드래그(유령 이미지)를 막습니다.
       track.addEventListener("dragstart", function (e) { e.preventDefault(); });
 
+      /* setPointerCapture 를 **쓰지 않습니다.**
+
+         포인터를 캡처하면 뒤따르는 호환 마우스 이벤트(mousedown·mouseup)도
+         캡처 대상으로 재조정됩니다. 그리고 click 은 mousedown 과 mouseup 의
+         공통 조상에서 발생합니다. 둘이 모두 트랙으로 옮겨지므로 click 이
+         카드 안의 <a> 에 닿지 않고, **카드를 눌러도 글로 넘어가지 않습니다.**
+
+         실제로 그 버그를 냈습니다. 헤드리스 크롬에 CDP 로 진짜 마우스 입력을
+         넣어 확인했습니다(합성 이벤트로는 재현되지 않습니다).
+
+         캡처의 목적은 "포인터가 트랙 밖으로 나가도 계속 끌리게" 하는 것인데,
+         그건 move·up 을 window 에서 듣는 것으로 충분합니다. */
       track.addEventListener("pointerdown", function (e) {
         if (e.button !== 0 || e.pointerType !== "mouse") return;
         dragging = true;
         moved = 0;
         x0 = e.clientX;
         s0 = track.scrollLeft;
-        pid = e.pointerId;
-        try { track.setPointerCapture(pid); } catch (err) {}
       });
 
-      track.addEventListener("pointermove", function (e) {
+      window.addEventListener("pointermove", function (e) {
         if (!dragging) return;
         var dx = e.clientX - x0;
-        if (Math.abs(dx) > 4 && !track.classList.contains("is-dragging")) {
-          // 스냅과 선택을 끄는 것은 실제로 끌기 시작한 뒤에만 합니다.
-          track.classList.add("is-dragging");
-        }
         moved = Math.max(moved, Math.abs(dx));
+        if (moved <= DRAG) return; // 아직 클릭일 수 있습니다. 가만히 둡니다.
+        // 스냅과 텍스트 선택을 끄는 것은 실제로 끌기 시작한 뒤에만 합니다.
+        track.classList.add("is-dragging");
         track.scrollLeft = s0 - dx;
       });
 
@@ -1053,21 +1060,20 @@
         if (!dragging) return;
         dragging = false;
         track.classList.remove("is-dragging");
-        if (pid !== null) {
-          try { track.releasePointerCapture(pid); } catch (err) {}
-          pid = null;
-        }
-        if (moved > 8) {
-          // 손을 뗀 직후에 오는 클릭 한 번만 무시합니다.
+        if (moved > DRAG) {
+          /* 손을 뗀 직후에 오는 클릭 한 번만 무시합니다.
+             리스너를 붙였다 떼는 방식은 클릭이 안 오면 리스너가 남아서
+             **다음에 진짜로 누른 클릭**을 삼켰습니다. 그래서 시각으로
+             판단합니다. */
           suppressUntil = now() + 250;
           goTo(index());
         }
       };
-      track.addEventListener("pointerup", endDrag);
-      track.addEventListener("pointercancel", endDrag);
-      track.addEventListener("lostpointercapture", endDrag);
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
+      // 창을 벗어난 채로 버튼을 떼면 up 이 오지 않습니다.
+      window.addEventListener("blur", endDrag);
 
-      // 리스너는 하나만 두고, 삼킬지 말지는 시각으로 정합니다.
       track.addEventListener("click", function (e) {
         if (now() >= suppressUntil) return;
         e.preventDefault();

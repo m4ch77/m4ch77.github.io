@@ -1361,45 +1361,6 @@ html:not(.js) .timeline::before { transform: scaleY(1); }
   padding: 0.08rem 0.45rem;
 }
 
-/* 마지막 칸 ─ 블로그로 넘어가는 더보기 카드 */
-.bcard-more .bcard-hit {
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  padding: 2rem 1.2rem;
-  border-style: dashed;
-  text-align: center;
-}
-.bcard-more .bcard-hit:hover {
-  border-style: solid;
-  border-color: var(--accent);
-}
-.bcard-more-icon {
-  display: grid;
-  place-items: center;
-  width: 2.8rem;
-  height: 2.8rem;
-  margin-bottom: 0.3rem;
-  border: 1px solid var(--line2);
-  border-radius: 50%;
-  color: var(--dim);
-  transition: color var(--t), border-color var(--t), transform var(--t);
-}
-.bcard-more-icon svg { width: 1.05rem; height: 1.05rem; }
-.bcard-more .bcard-hit:hover .bcard-more-icon {
-  color: var(--accent);
-  border-color: var(--accent);
-  transform: translate(3px, -3px);
-}
-.bcard-more-title {
-  font-size: 1.15rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  transition: color var(--t-fast);
-}
-.bcard-more .bcard-hit:hover .bcard-more-title { color: var(--accent); }
-.bcard-more-sub { font-family: var(--font-mono); font-size: 0.68rem; color: var(--faint); }
-
 .carousel-foot {
   display: flex;
   align-items: center;

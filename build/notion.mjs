@@ -115,6 +115,16 @@ export function normalizeApiBlocks(src) {
     return `<aside>${icon ? icon + " " : ""}${body}</aside>`;
   });
 
+  /* 빈 줄 — API 마크다운에는 문단을 가르는 **빈 줄이 없습니다.**
+     공식 문서에 "Plain empty lines are stripped out" 이라 적혀 있고,
+     의도한 빈 줄은 <empty-block/> 한 줄로 옵니다.
+
+     그대로 넘기면 markdown-it 이 모르는 태그로 흘려보내서 본문에
+     <empty-block/> 이 글자로 박히고, 게다가 빈 줄이 없으니 앞뒤 문단이
+     한 덩어리로 붙습니다. 첫 동기화 글에서 실제로 그렇게 나왔습니다.
+     표준 마크다운의 빈 줄로 되돌립니다. */
+  s = s.replace(/<empty-block\s*\/?>(?:\s*<\/empty-block>)?/gi, "\n");
+
   // 단 나누기 — 웹에서는 그냥 위아래로 흐르게 둡니다. 좁은 화면에서 단을
   // 유지하면 읽기가 나빠집니다.
   s = s.replace(/<\/?columns[^>]*>/gi, "");
@@ -169,6 +179,16 @@ export function normalizeNotionSyntax(src) {
   // 사람 멘션 → 그냥 이름만 남깁니다 (링크는 내부 주소라 쓸모없습니다)
   s = s.replace(/<mention-user[^>]*>([\s\S]*?)<\/mention-user>/gi, "$1");
   s = s.replace(/<mention-user[^>]*\/>/gi, "");
+
+  /* 페이지·DB 멘션 → 링크. 가리키는 곳이 Notion 안이라 방문자에게는
+     열리지 않지만, 글자를 지워 구멍을 내는 것보다 낫습니다. */
+  s = s.replace(
+    /<mention-(page|database)\b[^>]*\burl=["']([^"']+)["'][^>]*>([\s\S]*?)<\/mention-\1>/gi,
+    (m, kind, url, label) => `[${(label || "").trim() || "Notion 페이지"}](${url})`,
+  );
+  // 날짜 멘션 등 남은 멘션은 껍데기만 벗깁니다.
+  s = s.replace(/<mention-[a-z-]+[^>]*>([\s\S]*?)<\/mention-[a-z-]+>/gi, "$1");
+  s = s.replace(/<mention-[a-z-]+[^>]*\/>/gi, "");
 
   // 블록 속성 {color="..."} · 제목 토글 {toggle="true"} 는 떼어냅니다.
   s = s.replace(/\s*\{(?:color|toggle)=["'][^"']*["']\}/g, "");
@@ -298,6 +318,22 @@ export function parseLooseDate(raw) {
   return null;
 }
 
+/* ── 5. 넘어간 Notion 태그 찾기 ──────────────────────────
+   Notion 은 블록 표기를 계속 늘립니다. 우리가 모르는 태그가 오면
+   markdown-it 이 모르는 HTML 로 흘려보내고, 결국 방문자 화면에 글자로
+   박힙니다. <empty-block/> 이 정확히 그랬습니다.
+
+   그래서 빌드가 대신 봅니다. 검사는 코드 구간을 빼둔 상태에서 하므로,
+   Notion 문법을 설명하는 글의 코드 예제는 걸리지 않습니다. */
+const NOTION_TAGS =
+  /<\/?(callout|columns?|synced_block|table_of_contents|unknown|empty-block|mention-[a-z-]+|emoji|citation|toggle|file|video|audio|pdf|image)\b/gi;
+
+function leftoverTags(text) {
+  const found = new Set();
+  for (const m of text.matchAll(NOTION_TAGS)) found.add(m[1].toLowerCase());
+  return [...found];
+}
+
 /* ── 전체 파이프라인 ─────────────────────────────────────
    프런트매터(---)를 이미 쓴 글은 그대로 존중하고, 없으면 Notion 식으로
    제목과 속성을 뽑습니다. */
@@ -310,8 +346,12 @@ export function normalize(source, { hasFrontmatter }) {
   text = normalizeNotionSyntax(text);
   text = normalizeAssetPaths(text);
 
+  // 남은 Notion 태그는 여기서 셉니다 (코드는 아직 빠져 있는 상태).
+  const leftover = leftoverTags(text);
+
   text = guard.restore(text);
 
-  if (hasFrontmatter) return { data: {}, body: text };
-  return extractFrontmatter(text);
+  const out = hasFrontmatter ? { data: {}, body: text } : extractFrontmatter(text);
+  out.leftover = leftover;
+  return out;
 }
