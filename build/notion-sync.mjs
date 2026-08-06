@@ -336,10 +336,15 @@ async function main() {
   }
 
   /* Notion 에서 지운 글은 이 폴더에서도 지웁니다. content/writing/ 은
-     건드리지 않습니다. 폴더를 나눈 이유가 이것입니다. */
+     건드리지 않습니다. 폴더를 나눈 이유가 이것입니다.
+
+     폴더뿐 아니라 낱개 .md 파일도 봅니다. 동기화는 폴더 형태로 쓰지만
+     손으로 넣어둔 파일이 남아 있을 수 있습니다. */
   if (existsSync(OUT) && !DRY) {
     for (const e of await readdir(OUT, { withFileTypes: true })) {
-      if (!e.isDirectory() || kept.has(e.name)) continue;
+      const name = e.isDirectory() ? e.name : e.name.replace(/\.(md|markdown)$/i, "");
+      if (kept.has(name)) continue;
+      if (!e.isDirectory() && !/\.(md|markdown)$/i.test(e.name)) continue;
       await rm(path.join(OUT, e.name), { recursive: true, force: true });
       say(`  지움  ${e.name} (Notion 에 없습니다)`);
     }
