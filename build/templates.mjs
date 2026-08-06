@@ -11,6 +11,8 @@
    스크롤 정렬(모듈 17)의 대상이라, 글을 읽는 중에 화면이 끌려갑니다.
    ============================================================ */
 
+import { VIEWS_ENDPOINT } from "./config.mjs";
+
 const SITE = "https://m4ch77.com";
 
 export const esc = (s) =>
@@ -195,6 +197,7 @@ function shell({ title, description, canonical, head = "", main, jsonLd, depth }
 <link rel="icon" href="${up}favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="${esc(canonical)}">
 <link rel="alternate" type="application/rss+xml" title="m4ch77 — 글" href="/writing/rss.xml">
+${VIEWS_ENDPOINT ? `<meta name="views-endpoint" content="${esc(VIEWS_ENDPOINT)}">` : "<!-- 조회수 꺼짐 — build/config.mjs 의 VIEWS_ENDPOINT 가 비어 있습니다 -->"}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -292,10 +295,17 @@ export function feedPage(posts, allTags) {
           <span id="wr-shown">${posts.length}</span><span class="wr-slash">/</span><span>${posts.length}</span>
           <span class="wr-count-unit" data-en="posts">편</span>
         </p>
-        ${allTags.length ? `<div class="wr-filter" role="group" aria-label="태그로 걸러보기" data-en-label="Filter by tag">
-          <button class="wr-chip is-on" type="button" data-tag="" data-en="All">전체</button>
-          ${filters}
-        </div>` : ""}
+        <div class="wr-controls">
+          ${allTags.length ? `<div class="wr-filter" role="group" aria-label="태그로 걸러보기" data-en-label="Filter by tag">
+            <button class="wr-chip is-on" type="button" data-tag="" data-en="All">전체</button>
+            ${filters}
+          </div>` : ""}
+          <!-- 조회수 순은 Worker 주소가 설정돼 있을 때만 켜집니다 -->
+          <div class="wr-sort" role="group" aria-label="정렬" data-en-label="Sort" data-sort hidden>
+            <button class="wr-chip is-on" type="button" data-order="date" data-en="Newest">최신순</button>
+            <button class="wr-chip" type="button" data-order="views" data-en="Most read">조회순</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -369,6 +379,8 @@ export function postPage(post, prev, next) {
           <time datetime="${esc(post.date)}">${fmtDate(post.date)}</time>
           <i>·</i><span>${post.minutes}<span data-en="min">분</span></span>
           ${post.updated ? `<i>·</i><span data-en="updated ${fmtDate(post.updated)}">${fmtDate(post.updated)} 고침</span>` : ""}
+          <!-- 조회수는 JS 가 채웁니다. 값이 오기 전에는 자리를 차지하지 않습니다. -->
+          <span class="wr-views" data-views hidden><i>·</i><span class="wr-views-n">—</span><span data-en=" views"> 회</span></span>
         </p>
         <h1 class="wr-h1" data-split="words" data-split-dir="x">${esc(post.title)}</h1>
         ${post.summary ? `<p class="wr-lede" data-reveal>${esc(post.summary)}</p>` : ""}

@@ -2696,4 +2696,134 @@
     window.addEventListener("resize", onScroll, { passive: true });
     onScroll();
   })();
+
+  /* ══ 21 조회수 ══════════════════════════════════════════
+     숫자는 Cloudflare Worker(D1)에서 즉시 옵니다. 캐시가 없어서
+     새로고침하면 바로 반영됩니다.
+
+     같은 사람이 새로고침해도 오르지 않게 하는 판단은 **여기서** 합니다.
+     localStorage 에 24시간 표시를 남기고, 이미 있으면 올리지 않고 읽기만
+     합니다. 서버에 방문자를 식별할 값을 보내지 않으려는 것입니다.
+     쿠키도 쓰지 않습니다.
+
+     Worker 주소가 없으면(build/config.mjs 가 비어 있으면) 아무 것도 하지
+     않습니다. 주소 없이 요청을 보내 콘솔에 오류를 쌓는 것보다 낫습니다. */
+  (function views() {
+    var meta = $('meta[name="views-endpoint"]');
+    var base = meta ? (meta.getAttribute("content") || "").replace(/\/+$/, "") : "";
+    if (!base) return;
+
+    var SEEN_PREFIX = "m4ch77-seen-view:";
+    var DAY = 24 * 60 * 60 * 1000;
+
+    function seenRecently(path) {
+      try {
+        var at = Number(localStorage.getItem(SEEN_PREFIX + path) || 0);
+        return at && Date.now() - at < DAY;
+      } catch (e) { return false; }
+    }
+    function markSeen(path) {
+      try { localStorage.setItem(SEEN_PREFIX + path, String(Date.now())); } catch (e) {}
+    }
+
+    var fmt = function (n) {
+      try { return Number(n).toLocaleString(isEN ? "en-US" : "ko-KR"); }
+      catch (e) { return String(n); }
+    };
+
+    /* ── 글 본문: 1 올리고(또는 읽고) 보여줍니다 ── */
+    (function onPost() {
+      var slot = $("[data-views]");
+      if (!slot) return;
+
+      // 주소 끝의 슬래시를 떼서 Worker 의 경로 형식과 맞춥니다.
+      var path = location.pathname.replace(/\/+$/, "") || "/";
+      var numEl = $(".wr-views-n", slot);
+
+      function show(n) {
+        if (numEl) numEl.textContent = fmt(n);
+        slot.hidden = false;
+      }
+
+      var counted = seenRecently(path);
+      var req = counted
+        ? fetch(base + "/view?path=" + encodeURIComponent(path))
+        : fetch(base + "/view", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ path: path }),
+          });
+
+      req
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || typeof d.count !== "number") return;
+          show(d.count);
+          if (!counted && d.counted) markSeen(path);
+        })
+        .catch(function () { /* 조회수는 있으면 좋은 것입니다. 실패해도 조용히 넘어갑니다. */ });
+    })();
+
+    /* ── 글 목록: 조회순 정렬 ── */
+    (function onFeed() {
+      var list = $("#wr-list");
+      var sortWrap = $("[data-sort]");
+      if (!list || !sortWrap) return;
+
+      var buttons = $$("button[data-order]", sortWrap);
+      var items = $$(".wr-item", list);
+      // 처음 순서(최신순)를 기억해 두고 되돌릴 때 씁니다.
+      var original = items.slice();
+      var counts = null;
+
+      function setActive(order) {
+        buttons.forEach(function (b) {
+          var mine = b.getAttribute("data-order") === order;
+          b.classList.toggle("is-on", mine);
+          if (mine) b.setAttribute("aria-current", "true");
+          else b.removeAttribute("aria-current");
+        });
+      }
+
+      function slugOf(li) {
+        var a = $(".wr-hit", li);
+        if (!a) return "";
+        return (a.getAttribute("href") || "").replace(/\/+$/, "");
+      }
+
+      function apply(order) {
+        var seq;
+        if (order === "views" && counts) {
+          seq = original.slice().sort(function (a, b) {
+            var av = counts[slugOf(a)] || 0;
+            var bv = counts[slugOf(b)] || 0;
+            return bv - av; // 많이 읽힌 글이 위로
+          });
+        } else {
+          seq = original;
+        }
+        // 순서만 바꿉니다. appendChild 는 이동이라 노드가 새로 만들어지지
+        // 않으므로, 이미 나타난 등장 애니메이션이 다시 돌지 않습니다.
+        seq.forEach(function (li) { list.appendChild(li); });
+        quietHeader(600);
+        setActive(order);
+      }
+
+      // 숫자를 받아온 뒤에만 정렬 버튼을 보여줍니다.
+      fetch(base + "/views")
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.views) return;
+          counts = d.views;
+          sortWrap.hidden = false;
+        })
+        .catch(function () {});
+
+      buttons.forEach(function (b) {
+        b.addEventListener("click", function () {
+          apply(b.getAttribute("data-order"));
+        });
+      });
+    })();
+  })();
 })();

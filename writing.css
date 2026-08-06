@@ -53,8 +53,26 @@
 .wr-count .wr-slash { color: var(--faint); margin: 0 0.15em; }
 .wr-count-unit { color: var(--faint); margin-left: 0.35em; }
 
-/* 태그 칩 — 활성만 강조색입니다 */
+/* 태그 칩 · 정렬 — 활성만 강조색입니다 */
+.wr-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
 .wr-filter { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* 정렬 — 조회수 Worker 가 응답할 때만 보입니다 (그전엔 hidden) */
+.wr-sort { display: flex; gap: 0.4rem; }
+.wr-sort[hidden] { display: none; }
+/* 태그 줄과 구분되게 앞에 얇은 선을 둡니다 */
+@media (min-width: 40rem) {
+  .wr-sort { padding-left: 1.25rem; border-left: 1px solid var(--line); }
+}
+
+/* 조회수 (글 본문 머리) */
+.wr-views[hidden] { display: none; }
+.wr-views-n { font-variant-numeric: tabular-nums; }
 
 .wr-chip {
   font-family: var(--font-mono);
