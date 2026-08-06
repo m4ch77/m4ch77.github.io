@@ -12,4 +12,4 @@
    콘솔에 오류를 쌓는 것보다, 아무 일도 없는 편이 낫습니다.
 
    끝에 슬래시를 붙이지 마세요. */
-export const VIEWS_ENDPOINT = "";
+export const VIEWS_ENDPOINT = "https://m4ch77-views.m4ch77.workers.dev";

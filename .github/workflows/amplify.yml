@@ -64,43 +64,10 @@ jobs:
         if: steps.guard.outputs.ok == 'true'
         run: npm ci
 
-      - name: 글 빌드
+      - name: 빌드 · 산출물 모으기 · 비밀 값 검사
         if: steps.guard.outputs.ok == 'true'
-        run: npm run build
-
-      - name: 산출물 모으기
-        if: steps.guard.outputs.ok == 'true'
-        # Pages 워크플로 · amplify.yml 과 같은 허용 목록입니다.
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          rm -rf _site && mkdir -p _site
-
-          for f in *.html *.css *.js *.svg *.txt *.webmanifest; do
-            cp "$f" _site/
-          done
-          for d in assets .well-known writing; do
-            [ -d "$d" ] && cp -R "$d" _site/
-          done
-
-          echo "파일 $(find _site -type f | wc -l | tr -d ' ')개"
-
-      - name: 비밀 값 유출 검사
-        if: steps.guard.outputs.ok == 'true'
-        run: |
-          set -euo pipefail
-          fail=0
-          if find _site -type f \( -name '*.pem' -o -name '*.key' \
-               -o -name '*.p12' -o -name '*.pfx' -o -name '.env*' \) -print | grep -q .; then
-            echo "::error::산출물에 키 파일이 있습니다."
-            fail=1
-          fi
-          if grep -rIlE -- '-----BEGIN[ A-Z]*PRIVATE KEY-----' _site 2>/dev/null; then
-            echo "::error::산출물에 개인키 블록이 있습니다."
-            fail=1
-          fi
-          [ "$fail" -eq 0 ] || exit 1
-          echo "통과: 비밀 값 없음"
+        # Pages 워크플로 · amplify.yml 과 같은 스크립트를 씁니다.
+        run: bash deploy/assemble.sh
 
       - name: AWS 자격증명
         if: steps.guard.outputs.ok == 'true'

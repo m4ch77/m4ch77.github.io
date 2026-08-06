@@ -42,64 +42,16 @@ jobs:
       - name: 빌드 도구 설치
         run: npm ci
 
-      - name: 글 빌드 (마크다운 → HTML)
-        # content/writing/*.md → writing/<이름>/index.html
-        # 수식과 코드 강조를 여기서 끝냅니다. 방문자에게는 HTML 만 갑니다.
-        run: npm run build
+      - name: 빌드 · 산출물 모으기 · 비밀 값 검사
+        # 세 배포 경로(Pages · Amplify 레포연동 · Amplify 수동)가 이 스크립트
+        # 하나를 같이 씁니다. 각자 복사해 두면 반드시 어긋납니다.
+        run: bash deploy/assemble.sh
 
-      - name: 산출물 모으기
+      - name: 올라가는 파일 확인
         run: |
-          set -euo pipefail
-          shopt -s nullglob
-
-          rm -rf _site
-          mkdir -p _site
-
-          # 올릴 것만 고릅니다 (허용 목록).
-          # deploy/ · design.md · secret/ · content/ · build/ 처럼
-          # 저장소에만 두는 것은 목록에 없으므로 구조적으로 올라갈 수 없습니다.
-          for f in *.html *.css *.js *.svg *.txt *.webmanifest; do
-            cp -v "$f" _site/
-          done
-
-          # writing/ 은 위 빌드가 만든 결과입니다.
-          for d in assets .well-known writing; do
-            if [ -d "$d" ]; then
-              cp -Rv "$d" _site/ > /dev/null
-              echo "  디렉터리 $d"
-            fi
-          done
-
           echo "── _site 내용 ──"
           find _site -type f -not -path '*/katex/fonts/*' | sort
           echo "  (katex 폰트 $(find _site -path '*/katex/fonts/*' -type f | wc -l | tr -d ' ')개는 생략)"
-
-      - name: 비밀 값 유출 검사
-        run: |
-          set -euo pipefail
-
-          # 산출물에 키 파일이나 PEM 블록이 섞여 들어갔으면 배포를 멈춥니다.
-          # .gitignore 를 우회해 실수로 커밋된 경우를 잡는 두 번째 그물입니다.
-          fail=0
-
-          if find _site -type f \( -name '*.pem' -o -name '*.key' \
-               -o -name '*.p12' -o -name '*.pfx' -o -name '.env*' \) \
-               -print | grep -q .; then
-            echo "::error::산출물에 키 파일이 있습니다."
-            find _site -type f \( -name '*.pem' -o -name '*.key' \
-              -o -name '*.p12' -o -name '*.pfx' -o -name '.env*' \) -print
-            fail=1
-          fi
-
-          if grep -rIlE -- '-----BEGIN[ A-Z]*PRIVATE KEY-----' _site 2>/dev/null; then
-            echo "::error::산출물에 개인키 블록이 있습니다."
-            fail=1
-          fi
-
-          if [ "$fail" -ne 0 ]; then
-            exit 1
-          fi
-          echo "통과: 비밀 값 없음"
 
       - name: 문법 검사
         run: |

@@ -37,69 +37,25 @@ command -v zip  >/dev/null || { echo "zip 이 없습니다."; exit 1; }
 command -v curl >/dev/null || { echo "curl 이 없습니다."; exit 1; }
 command -v npm  >/dev/null || { echo "npm 이 없습니다 (글 빌드에 필요합니다)."; exit 1; }
 
-# ── 0. 글을 먼저 빌드합니다
-#    writing/ 은 content/writing/*.md 에서 만들어지는 산출물이라
-#    저장소에 없습니다. 빌드하지 않으면 글이 빠진 채로 올라갑니다.
-echo "▸ 글 빌드"
-( cd "$ROOT" && npm run build )
-echo
-
-FILES=(
-  index.html
-  main.js
-  styles.css
-  theme.css
-  writing.css
-  favicon.svg
-)
-
-DIRS=(
-  assets
-  .well-known
-  writing
-)
-
-STAGE="$(mktemp -d)"
-trap 'rm -rf "$STAGE"' EXIT
-SITE="$STAGE/site"
-ZIP="$STAGE/site.zip"
-mkdir -p "$SITE"
-
 echo "▸ 앱     $APP_ID   브랜치 $BRANCH   리전 $REGION"
 echo "▸ 경로   $ROOT"
 echo
 
-# ── 1. 번들 구성
-echo "▸ 번들 구성"
-for f in "${FILES[@]}"; do
-  [ -f "$ROOT/$f" ] || { echo "  파일이 없습니다: $f"; exit 1; }
-  cp "$ROOT/$f" "$SITE/"
-done
+# ── 0~2. 빌드 · 산출물 모으기 · 비밀 값 검사
+#    허용 목록과 검사는 deploy/assemble.sh 한 곳에만 있습니다.
+#    예전에는 이 파일이 자기 목록을 따로 갖고 있었는데, 배포 경로가 늘면
+#    반드시 어긋나기 때문에 합쳤습니다.
+bash "$ROOT/deploy/assemble.sh"
+echo
 
-for d in "${DIRS[@]}"; do
-  [ -d "$ROOT/$d" ] || { echo "  디렉터리가 없습니다: $d"; exit 1; }
-  cp -R "$ROOT/$d" "$SITE/"
-done
-
-find "$SITE" -name '.DS_Store' -delete
-find "$SITE" -name '._*' -delete
-
-# ── 2. 안전장치 — 올려서는 안 되는 것이 섞였으면 여기서 멈춥니다
-LEAKED="$(find "$SITE" \
-  \( -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' \
-     -o -name 'config.sh' -o -name '.env' -o -name '*.md' \) -print)"
-if [ -n "$LEAKED" ]; then
-  echo
-  echo "중단합니다. 번들에 올려서는 안 되는 파일이 있습니다:"
-  echo "$LEAKED" | sed "s|$SITE/|  |"
-  exit 1
-fi
-
-COUNT="$(find "$SITE" -type f | wc -l | tr -d ' ')"
-echo "  파일 $COUNT 개"
-find "$SITE" -type f | sed "s|$SITE/|    |" | sort
+SITE="$ROOT/_site"
+STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
+ZIP="$STAGE/site.zip"
 
 # ── 3. zip
+#    산출물의 **내용**을 담아야 합니다. 최상위 폴더째로 압축하면 사이트
+#    루트가 잡히지 않아 Amplify 가 Access Denied 를 냅니다.
 ( cd "$SITE" && zip -r -X -q "$ZIP" . )
 echo "  zip $(wc -c < "$ZIP" | tr -d ' ') bytes"
 

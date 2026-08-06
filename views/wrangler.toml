@@ -22,4 +22,4 @@ enabled = true
 [[d1_databases]]
 binding = "DB"              # worker.js 의 env.DB
 database_name = "m4ch77-views"
-database_id = ""            # ← wrangler d1 create 출력값을 넣어 주세요
+database_id = "561d9b0f-39eb-4bb4-9f1a-e1494b6e7e2f"            # ← wrangler d1 create 출력값을 넣어 주세요
