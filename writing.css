@@ -193,12 +193,21 @@
     grid-template-columns: 8.5rem 1fr;
     grid-template-areas:
       "meta title"
-      ".    excerpt"
-      ".    tags";
+      "meta excerpt"
+      "meta tags";
     gap: 0.4rem 2rem;
     align-items: baseline;
   }
-  .wr-meta { grid-area: meta; padding-top: 0.35rem; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+  /* 메타를 세 줄 전체에 걸칩니다. 첫 줄에만 두면 날짜·분·조회수 세 줄이
+     제목 줄의 높이를 밀어 올려서 제목과 본문 사이가 벌어집니다. */
+  .wr-meta {
+    grid-area: meta;
+    align-self: start;
+    padding-top: 0.35rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
   .wr-meta i { display: none; }
   .wr-title { grid-area: title; }
   .wr-excerpt { grid-area: excerpt; }

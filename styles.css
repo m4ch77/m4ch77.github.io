@@ -1071,24 +1071,9 @@ kbd {
   transform: none;
 }
 
-/* 제목 아래의 작은 "전체 보기" — 제목이 링크인 것을 놓쳐도 여기서 갑니다 */
-.sec-head-more {
-  margin-top: 0.85rem;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-}
-.sec-head-more a {
-  color: var(--dim);
-  text-decoration: underline;
-  text-decoration-color: var(--line2);
-  text-underline-offset: 4px;
-  transition: color var(--t-fast), text-decoration-color var(--t-fast);
-}
-.sec-head-more a:hover {
-  color: var(--accent);
-  text-decoration-color: var(--accent);
-}
+/* 글 목록으로 가는 문은 두 개입니다 — 위의 제목 링크와, 캐러셀 마지막의
+   "더보기" 카드. 제목 아래에 작은 링크를 하나 더 뒀다가 뺐습니다.
+   같은 곳으로 가는 문이 셋이면 많습니다. */
 
 .sub-head {
   margin-top: clamp(2.2rem, 4.5vw, 3.2rem);

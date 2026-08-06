@@ -1,0 +1,105 @@
+name: 조회수 스냅샷
+
+# 하루 한 번 조회수 전체를 읽어 저장소에 남깁니다.
+#
+# **조회마다 커밋하지 않습니다.** 화면에 보이는 숫자는 Worker(D1)에서
+# 실시간으로 옵니다. 이 워크플로는 순수하게 보험입니다.
+#
+#   · 분석 서비스를 바꾸거나 계정을 옮겨도 숫자 이력이 git 에 남습니다
+#   · D1 이 날아가도 마지막 스냅샷으로 되돌릴 수 있습니다
+#
+# 숫자가 안 바뀐 날은 커밋하지 않습니다(빈 커밋을 쌓지 않으려고).
+
+on:
+  schedule:
+    # 매일 UTC 18:00 = KST 03:00. 정시는 부하가 몰려 밀리므로 조금 비켜 둡니다.
+    - cron: "7 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "views-snapshot"
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    name: 숫자 받아서 커밋
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v7
+
+      - name: Worker 주소 읽기
+        id: cfg
+        # build/config.mjs 한 곳만 보게 해서 주소가 두 곳에 생기지 않게 합니다.
+        run: |
+          set -euo pipefail
+          url=$(sed -n 's/.*VIEWS_ENDPOINT *= *"\([^"]*\)".*/\1/p' build/config.mjs | head -1)
+          if [ -z "$url" ]; then
+            echo "::notice::VIEWS_ENDPOINT 가 비어 있어 건너뜁니다."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 조회수 받아오기
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          URL: ${{ steps.cfg.outputs.url }}
+        run: |
+          set -euo pipefail
+          mkdir -p data
+
+          # 실패하면 기존 스냅샷을 덮지 않고 그대로 멈춥니다.
+          # 빈 응답으로 이력을 지우는 것이 최악입니다.
+          curl -sSf --max-time 30 "$URL/views" -o /tmp/views.json
+
+          python3 - <<'PY'
+          import json, datetime, pathlib
+
+          raw = json.load(open("/tmp/views.json"))
+          views = raw.get("views")
+          if not isinstance(views, dict):
+              raise SystemExit("응답에 views 가 없습니다. 스냅샷을 남기지 않습니다.")
+
+          out = pathlib.Path("data/views.json")
+          prev = {}
+          if out.exists():
+              try:
+                  prev = json.loads(out.read_text()).get("views", {})
+              except Exception:
+                  prev = {}
+
+          # 조회수는 줄어들 수 없습니다. 줄었다면 서비스 쪽 문제이거나 초기화된
+          # 것이므로, 더 큰 값을 남겨 이력을 잃지 않게 합니다.
+          merged = dict(prev)
+          for k, v in views.items():
+              merged[k] = max(int(v), int(prev.get(k, 0)))
+
+          out.write_text(json.dumps({
+              "updated": datetime.datetime.now(datetime.timezone.utc)
+                          .isoformat(timespec="seconds"),
+              "total": sum(merged.values()),
+              "views": dict(sorted(merged.items())),
+          }, ensure_ascii=False, indent=2) + "\n")
+
+          print(f"글 {len(merged)}개, 합계 {sum(merged.values())}")
+          PY
+
+      - name: 바뀐 것만 커밋
+        if: steps.cfg.outputs.ok == 'true'
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/views.json; then
+            echo "숫자가 그대로입니다. 커밋하지 않습니다."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/views.json
+          git commit -m "조회수 스냅샷 $(date -u +%Y-%m-%d)"
+          git push

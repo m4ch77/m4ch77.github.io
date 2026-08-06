@@ -2837,15 +2837,33 @@
         setActive(order);
       }
 
-      // 숫자를 받아온 뒤에만 정렬 버튼을 보여줍니다.
+      /* 각 행에 조회수를 써 넣습니다. 숫자가 없는 글은 0 으로 둡니다.
+         (아직 아무도 안 읽은 글도 "0 회" 로 보이는 편이, 어떤 글은 숫자가
+         있고 어떤 글은 없는 것보다 읽기 쉽습니다.) */
+      function fillRowViews() {
+        items.forEach(function (li) {
+          var slot = $("[data-row-views]", li);
+          if (!slot) return;
+          var n = counts[slugOf(li)] || 0;
+          var numEl = $(".wr-views-n", slot);
+          if (numEl) {
+            try { numEl.textContent = Number(n).toLocaleString(isEN ? "en-US" : "ko-KR"); }
+            catch (e) { numEl.textContent = String(n); }
+          }
+          slot.hidden = false;
+        });
+      }
+
       fetch(base + "/views")
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (!d || !d.views) return;
           counts = d.views;
+          fillRowViews();
+          // 숫자를 받은 뒤에만 정렬 버튼을 보여줍니다.
           sortWrap.hidden = false;
         })
-        .catch(function () {});
+        .catch(function () { /* 조회수는 있으면 좋은 것입니다. 실패해도 조용히. */ });
 
       buttons.forEach(function (b) {
         b.addEventListener("click", function () {

@@ -263,6 +263,8 @@ export function feedPage(posts, allTags) {
               <i>·</i>
               <span class="wr-read">${p.minutes}<span data-en="min">분</span></span>
               ${p.lang === "en" ? '<i>·</i><span class="wr-lang">EN</span>' : ""}
+              <!-- 조회수는 JS 가 채웁니다. 값이 오기 전에는 자리를 차지하지 않습니다. -->
+              <span class="wr-views" data-row-views hidden><i>·</i><span class="wr-views-n">—</span><span data-en=" views"> 회</span></span>
             </span>
             <span class="wr-title">${esc(p.title)}</span>
             <span class="wr-excerpt">${esc(p.summary)}</span>
