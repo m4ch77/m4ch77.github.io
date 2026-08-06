@@ -93,6 +93,62 @@ const COLORS = new Set([
   "blue", "purple", "pink", "red",
 ]);
 
+/* Notion **API** 는 UI 내보내기와 다른 태그를 씁니다. 공식 매핑표 기준으로
+   차이가 나는 것만 먼저 맞춰 둡니다.
+
+     콜아웃   UI: <aside>        API: <callout>
+     표       UI: GFM 파이프 표   API: <table><tr><td>
+     그 밖에  <columns> <column> <synced_block> <table_of_contents/>
+              <unknown url alt> <file src> <video src> <audio src> <pdf src>
+
+   표는 마크다운으로 되돌리지 않고 HTML 그대로 둡니다. markdown-it 이
+   html:true 라 통과하고, .tbl-wrap 으로 감싸 스타일을 맞춥니다. */
+export function normalizeApiBlocks(src) {
+  let s = src;
+
+  /* 콜아웃 — 아래 normalizeNotionSyntax 의 <aside> 처리에 얹습니다.
+     API 는 아이콘을 **속성**에 담습니다(<callout icon="💡">). UI 내보내기는
+     본문 첫 글자에 둡니다. <aside> 처리가 본문에서 이모지를 찾으므로,
+     속성에 있는 아이콘을 본문 앞으로 옮겨 줍니다. */
+  s = s.replace(/<callout([^>]*)>([\s\S]*?)<\/callout>/gi, (m, attrs, body) => {
+    const icon = (attrs.match(/icon=["']([^"']+)["']/i) || [])[1] || "";
+    return `<aside>${icon ? icon + " " : ""}${body}</aside>`;
+  });
+
+  // 단 나누기 — 웹에서는 그냥 위아래로 흐르게 둡니다. 좁은 화면에서 단을
+  // 유지하면 읽기가 나빠집니다.
+  s = s.replace(/<\/?columns[^>]*>/gi, "");
+  s = s.replace(/<\/?column[^>]*>/gi, "");
+
+  // 동기화 블록 — 껍데기만 벗기고 내용은 남깁니다.
+  s = s.replace(/<\/?synced_block[^>]*>/gi, "");
+
+  // Notion 의 목차 블록 — 우리 사이트가 목차를 따로 만듭니다. 지웁니다.
+  s = s.replace(/<table_of_contents\s*\/?>/gi, "");
+
+  // 표는 HTML 그대로 두되, 우리 렌더러가 감싸는 것과 같은 껍데기를 붙입니다.
+  s = s.replace(/<table(\s[^>]*)?>/gi, '<div class="tbl-wrap"><table>');
+  s = s.replace(/<\/table>/gi, "</table></div>");
+
+  // 파일·영상·음성·PDF — 내려받아 커밋한 뒤 링크로 둡니다.
+  s = s.replace(
+    /<(file|video|audio|pdf)\s+src=["']([^"']+)["']\s*>([\s\S]*?)<\/\1>/gi,
+    (m, kind, url, caption) => {
+      const label = (caption || "").trim() || kind.toUpperCase();
+      return `[${label}](${url})`;
+    },
+  );
+
+  /* 지원되지 않는 블록(북마크·임베드·링크 미리보기 등)은 <unknown> 으로
+     옵니다. 조용히 지우면 글에 구멍이 생기니, 원본으로 가는 링크를 남깁니다. */
+  s = s.replace(
+    /<unknown\s+url=["']([^"']+)["']\s+alt=["']([^"']*)["']\s*\/?>/gi,
+    (m, url, alt) => `[${alt || "Notion 블록"}](${url})`,
+  );
+
+  return s;
+}
+
 export function normalizeNotionSyntax(src) {
   let s = src;
 
@@ -249,6 +305,7 @@ export function normalize(source, { hasFrontmatter }) {
   const guard = protectCode(source);
   let text = guard.text;
 
+  text = normalizeApiBlocks(text);
   text = normalizeMath(text);
   text = normalizeNotionSyntax(text);
   text = normalizeAssetPaths(text);

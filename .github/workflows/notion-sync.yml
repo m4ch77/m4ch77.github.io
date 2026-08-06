@@ -1,0 +1,86 @@
+name: Notion 동기화
+
+# Notion 의 글을 content/notion/ 으로 내려받아 커밋합니다.
+# 커밋이 생기면 배포 워크플로가 이어서 돌아 사이트에 반영됩니다.
+#
+# 5분마다 돕니다. GitHub 의 스케줄 최소 간격이 5분이고, 부하에 따라 조금
+# 밀립니다. 급할 때는 Actions 탭에서 "Run workflow" 를 누르면 바로 돕니다.
+#
+# 필요한 시크릿
+#   NOTION_TOKEN   통합의 내부 시크릿 (읽기 권한만 주세요)
+#
+# 시크릿이 없으면 아무 것도 하지 않고 조용히 끝납니다.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 두 개가 동시에 돌면 같은 파일을 두고 다툽니다.
+concurrency:
+  group: "notion-sync"
+  cancel-in-progress: false
+
+env:
+  # 데이터 소스 ID. Notion DB → ··· → 데이터 소스 관리 → 데이터 소스 ID 복사
+  NOTION_DATA_SOURCE_ID: "3b3830f6-6e3d-8002-b353-000b715858e9"
+
+jobs:
+  sync:
+    name: 받아서 커밋
+    runs-on: ubuntu-latest
+    steps:
+      - name: 토큰 있는지 확인
+        id: guard
+        env:
+          T: ${{ secrets.NOTION_TOKEN }}
+        run: |
+          if [ -n "$T" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NOTION_TOKEN 이 없어 동기화를 건너뜁니다."
+          fi
+
+      - name: 체크아웃
+        if: steps.guard.outputs.ok == 'true'
+        uses: actions/checkout@v7
+
+      - name: Node 준비
+        if: steps.guard.outputs.ok == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Notion 에서 받기
+        if: steps.guard.outputs.ok == 'true'
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: node build/notion-sync.mjs
+
+      - name: 빌드되는지 확인
+        if: steps.guard.outputs.ok == 'true'
+        # 받아온 글이 빌드를 깨뜨리면 커밋하지 않습니다. 깨진 상태를
+        # 커밋하면 배포 워크플로가 실패하고 원인이 두 단계 떨어져 보입니다.
+        run: |
+          npm ci
+          npm run build
+
+      - name: 바뀐 것만 커밋
+        if: steps.guard.outputs.ok == 'true'
+        run: |
+          set -euo pipefail
+          # 생성물(writing/)은 .gitignore 에 있으니 원본만 봅니다.
+          if git diff --quiet -- content/; then
+            echo "Notion 쪽 변경이 없습니다."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/
+          git commit -m "Notion 동기화 $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git push
