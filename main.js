@@ -1122,6 +1122,8 @@
     var fCount = $("#til-filter-count");
     var fClear = $("#til-filter-clear");
     var picked = null;
+    // 잔디가 자라 오르는 모션을 처음 한 번만 보여주기 위한 표시입니다.
+    var grown = false;
 
     // 목록이 줄어들어도 섹션 높이가 변하지 않게 처음 높이를 잡아 둡니다.
     // (높이가 바뀌면 섹션이 다시 중앙 정렬되면서 화면이 밀립니다)
@@ -1269,6 +1271,9 @@
       for (var w = 0; w < WEEKS; w++) {
         var col = document.createElement("div");
         col.className = "til-col";
+        // 열(주)마다 순서를 남깁니다. CSS 가 이 값으로 지연을 계산해서
+        // 잔디가 왼쪽부터 차례로 자라 오릅니다.
+        col.style.setProperty("--i", w);
         for (var d = 0; d < 7; d++) {
           var day = new Date(start);
           day.setDate(day.getDate() + w * 7 + d);
@@ -1278,6 +1283,29 @@
       }
       heat.replaceChildren(frag);
       heat.scrollLeft = heat.scrollWidth; // 최근이 보이도록
+
+      /* 자라는 모션은 처음 한 번만 보여줍니다. 날짜를 눌러 걸러낼 때마다
+         다시 자라면 시끄럽습니다. reduceMotion 이면 아예 하지 않습니다. */
+      if (!grown && !reduceMotion) {
+        grown = true;
+        heat.classList.add("is-seeding"); // 미리 감춤
+
+        var sprout = function () {
+          heat.classList.remove("is-seeding");
+          heat.classList.add("is-grown");
+        };
+        observeOnce([heat], sprout);
+
+        /* 안전장치. is-seeding 은 칸을 opacity 0 으로 감추므로, 관찰이
+           어떤 이유로든 걸리지 않으면 잔디가 영영 안 보입니다.
+           (실제로 clip-path 로 같은 실수를 한 적이 있습니다.)
+           15초면 스크롤해 내려올 사람은 이미 봤고, 아직 위에 있는
+           사람에게는 그냥 처음부터 있던 것처럼 보입니다.
+           어느 쪽이든 "안 보이는" 경우는 없습니다. */
+        setTimeout(function () {
+          if (heat.classList.contains("is-seeding")) sprout();
+        }, 15000);
+      }
     }
 
     // "이번 주"로 세면 일요일마다 0으로 떨어져 지표가 쓸모없어집니다.

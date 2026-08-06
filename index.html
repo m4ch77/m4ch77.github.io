@@ -356,8 +356,18 @@
       <div class="sec-head">
         <div>
           <p class="section-kicker" data-reveal><span class="num">02</span> <span data-en="Blog">블로그</span></p>
-          <h2 class="section-title" data-split="chars" data-split-dir="x">What I <span class="thin">Wrote</span></h2>
+          <!-- 제목을 누르면 글 목록으로 갑니다. 카드는 각 글로 가고,
+               여기는 전체 목록으로 가는 문입니다. -->
+          <h2 class="section-title">
+            <a class="sec-title-link" href="/writing" data-cursor-label="글 전체" data-cursor-label-en="All posts">
+              <span data-split="chars" data-split-dir="x">What I <span class="thin">Wrote</span></span>
+              <svg class="sec-title-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"/></svg>
+            </a>
+          </h2>
           <p class="section-tagline" data-reveal data-en="Notes I have written.">쓴 글을 모아 둡니다.</p>
+          <p class="sec-head-more" data-reveal>
+            <a href="/writing" data-en="See all posts">글 전체 보기</a>
+          </p>
         </div>
         <div class="carousel-nav" data-reveal>
           <span class="slider-count">
@@ -490,7 +500,9 @@
         </dl>
       </div>
 
-      <div class="til-heat-wrap" data-reveal="rise">
+      <!-- 잔디는 칸이 왼쪽부터 자라 오릅니다(styles.css 의 til-grow).
+           덩어리째 움직이면 잘 보이지 않아서 data-reveal 을 뺐습니다. -->
+      <div class="til-heat-wrap">
         <div class="til-heat" id="til-heat" aria-label="최근 기록 달력. 칸 하나가 하루입니다." data-en-label="Recent notes calendar. One cell is one day."></div>
         <p class="til-legend">
           <span class="tlg-scale">

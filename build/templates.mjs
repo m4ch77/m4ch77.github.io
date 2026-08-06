@@ -251,20 +251,13 @@ const tagList = (tags) =>
 
 /* ══ 글 목록 (테크 피드) ═══════════════════════════════════ */
 export function feedPage(posts, allTags) {
-  /* 목록 행의 결을 두 가지로 둡니다 — 보고 고르시라고 일부러 섞었습니다.
-       1번째 글  is-card : 좌우 패딩과 radius 가 있는 카드형.
-                          커서 프레임이 붙을 형태가 있어서 테두리가 맞습니다.
-       2번째부터 is-text : 테두리 없는 텍스트형.
-                          커서 프레임(data-cursor-box)을 붙이지 않습니다.
-                          붙이면 각진 사각형이 글자에 딱 붙어 어색합니다.
-     정하시면 한쪽만 남기고 이 분기를 지웁니다. */
+  /* 모든 행이 같은 결입니다. 평소에는 구분선만 있는 조용한 목록이고,
+     포인터를 올린 행만 카드로 떠오릅니다(writing.css). */
   const items = posts
-    .map((p, i) => {
-      const variant = i === 0 ? "card" : "text";
-      const box = variant === "card" ? " data-cursor-box" : "";
-      return `
-        <li class="wr-item is-${variant}" data-reveal="wipe" data-tags="${esc((p.tags || []).join(" "))}">
-          <a class="wr-hit" href="/writing/${esc(p.slug)}" data-cursor-label="읽기" data-cursor-label-en="Read"${box}>
+    .map(
+      (p) => `
+        <li class="wr-item" data-reveal="wipe" data-tags="${esc((p.tags || []).join(" "))}">
+          <a class="wr-hit" href="/writing/${esc(p.slug)}" data-cursor-label="읽기" data-cursor-label-en="Read" data-cursor-box>
             <span class="wr-meta">
               <time class="wr-date" datetime="${esc(p.date)}">${fmtDate(p.date)}</time>
               <i>·</i>
@@ -275,8 +268,8 @@ export function feedPage(posts, allTags) {
             <span class="wr-excerpt">${esc(p.summary)}</span>
             ${tagList(p.tags)}
           </a>
-        </li>`;
-    })
+        </li>`,
+    )
     .join("");
 
   const filters = allTags

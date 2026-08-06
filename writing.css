@@ -109,29 +109,31 @@
   color: inherit;
 }
 
-/* ── 목록 행의 두 가지 결 (보고 고르시라고 섞어 둡니다) ──
-   (A) is-card ─ 1번째 글.
-   커서 프레임은 대상의 bounding box 를 그대로 복사하고 radius 도 그대로
-   읽습니다. 그래서 테두리와 radius 가 있으면 프레임이 정확히 맞습니다.
-   좌우 패딩만큼 음수 마진으로 당겨서 글자는 텍스트형과 같은 선에 둡니다. */
-.wr-item.is-card { border-top: 0; }
-.wr-item.is-card .wr-hit {
-  --pad-x: clamp(1rem, 2vw, 1.4rem);
-  padding: clamp(1.2rem, 2.6vw, 1.6rem) var(--pad-x);
-  margin-inline: calc(-1 * var(--pad-x));
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--card);
-  transition: border-color var(--t-fast), transform var(--t);
-}
-.wr-item.is-card .wr-hit:hover { border-color: var(--line2); transform: translateY(-3px); }
-/* 카드 테두리가 이미 경계라 다음 행의 구분선은 없앱니다 */
-.wr-item.is-card + .wr-item { border-top: 0; }
+/* ── 평소에는 텍스트 목록, 올리면 카드 ──────────────────
+   비교해 보고 이 결로 정했습니다. 가만히 있을 때는 구분선만 있는 조용한
+   목록이고, 포인터를 올린 행만 카드로 떠오릅니다.
 
-/* (B) is-text ─ 2번째부터. 테두리 없이 구분선만.
-   커서 프레임(data-cursor-box)을 붙이지 않았습니다. 붙이면 radius 0 인
-   각진 사각형이 셸 폭을 꽉 채운 채 글자에 딱 붙어서 어색합니다. */
-.wr-item.is-text .wr-hit { padding-inline: 0; }
+   좌우 패딩을 주고 그만큼 음수 마진으로 당기는 이유: 글자는 텍스트 목록과
+   같은 선에 있어야 하고, 카드는 그보다 넓게 잡혀야 여백이 생깁니다.
+   패딩이 없으면 테두리가 글자에 딱 붙어서 어색합니다(처음 지적하신 것).
+
+   커서 프레임이 정확히 맞는 것도 이 덕분입니다. 프레임은 대상의 bounding
+   box 와 radius 를 그대로 복사하므로, 맞을 형태가 있어야 맞습니다. */
+.wr-item .wr-hit {
+  --pad-x: clamp(1rem, 2vw, 1.4rem);
+  padding-inline: var(--pad-x);
+  margin-inline: calc(-1 * var(--pad-x));
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  transition: border-color var(--t-fast), background-color var(--t-fast),
+              transform var(--t);
+}
+.wr-item .wr-hit:hover,
+.wr-item .wr-hit:focus-visible {
+  border-color: var(--line2);
+  background: var(--card);
+  transform: translateY(-3px);
+}
 
 .wr-meta {
   display: flex;
@@ -291,18 +293,12 @@
 .wr-toc ol { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
 .wr-toc li { position: relative; }
 
-/* 상위(h2)는 mono, 하위(h3)는 본문 서체.
-   패딩만으로 구분하면 훑을 때 계층이 안 읽혀서 서체까지 갈랐습니다. */
-.wr-toc li.lv2 > a {
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  letter-spacing: 0.01em;
-  color: var(--fg);
-}
+/* 하위 항목 — 패딩으로 계층을 보이고, 앞에 짧은 선 하나만 둡니다.
+   세로 안내선과 서체 구분까지 넣었더니 목차가 본문보다 시끄러웠습니다.
+   표시는 하나로 충분합니다.
 
-/* 하위 항목 — 패딩은 유지하고, 앞에 짧은 선을 하나 그립니다.
-   글자("–")로 넣지 않은 이유: 스크린리더가 읽어 버립니다.
-   1px 짜리 도형이라 소리로는 안 나가고 눈에만 보입니다. */
+   글자("-")로 넣지 않은 이유: 스크린리더가 항목마다 읽어 버립니다.
+   1px 도형이라 소리로는 안 나가고 눈에만 보입니다. */
 .wr-toc li.lv3 { padding-left: 0.95rem; }
 .wr-toc li.lv3 > a::before {
   content: "";
@@ -313,19 +309,6 @@
   vertical-align: middle;
   background: var(--line2);
 }
-/* 하위 묶음 왼쪽의 세로 안내선 */
-.wr-toc li.lv3::before {
-  content: "";
-  position: absolute;
-  left: 0.1rem;
-  top: 0;
-  bottom: calc(-0.5rem - 1px); /* 다음 항목까지 이어 붙입니다 */
-  width: 1px;
-  background: var(--line);
-}
-.wr-toc li.lv3:last-child::before { bottom: 0.55em; }
-/* 하위 뒤에 다시 상위가 오면 선을 끊습니다 */
-.wr-toc li.lv3:has(+ li.lv2)::before { bottom: 0.55em; }
 
 .wr-toc a {
   display: block;
@@ -339,20 +322,11 @@
 
 /* ── 지금 읽는 절 (스크롤 스파이) ────────────────────────
    main.js 20 번 모듈이 aria-current 를 옮겨 붙입니다.
-   aria-current 라서 스크린리더에도 "현재 항목"으로 전달됩니다. */
+   aria-current 라서 스크린리더에도 "현재 항목"으로 전달됩니다.
+
+   표시는 **색만** 바꿉니다. 왼쪽에 막대까지 그렸더니 세로선이 겹쳐
+   복잡했습니다. 색 하나로도 어디를 읽는지 충분히 보입니다. */
 .wr-toc a[aria-current="true"] { color: var(--accent); }
-.wr-toc a[aria-current="true"]::after {
-  content: "";
-  position: absolute;
-  left: calc(-1.2rem - 1px); /* 목차 왼쪽 테두리 위에 겹칩니다 */
-  top: 0.3em;
-  width: 2px;
-  height: 1.05em;
-  background: var(--accent);
-  border-radius: 1px;
-}
-/* 하위 항목은 그만큼 더 왼쪽으로 */
-.wr-toc li.lv3 a[aria-current="true"]::after { left: calc(-1.2rem - 0.95rem - 1px); }
 
 /* ══ 6. 본문 타이포 ══════════════════════════════════════ */
 .wr-prose {
