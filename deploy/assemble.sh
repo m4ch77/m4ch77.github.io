@@ -11,10 +11,8 @@
 # 둡니다. 허용 목록을 고칠 일이 생기면 이 파일만 고치면 됩니다.
 #
 # 쓰는 곳
-#   amplify.yml                        (Amplify 레포 연동)
+#   amplify.yml                        (Amplify 레포 연동 — 실제 배포)
 #   .github/workflows/deploy.yml       (GitHub Pages)
-#   .github/workflows/amplify.yml      (Actions → Amplify 수동 업로드)
-#   deploy/deploy.sh                   (로컬에서 수동 배포)
 
 set -euo pipefail
 shopt -s nullglob
@@ -33,7 +31,9 @@ mkdir -p "$OUT"
 
 # ── 허용 목록 ────────────────────────────────────────────
 # 목록에 없는 것은 올라갈 수 없습니다. content/ · build/ · deploy/ ·
-# views/ · secret/ · design.md · package.json 등은 저장소에만 남습니다.
+# views/ · cron/ · secret/ · design.md · package.json 등은 저장소에만
+# 남습니다. (*.js 는 최상위만 복사하므로 views/worker.js 나
+# cron/worker.js 는 걸리지 않습니다)
 # 제외 목록(denylist) 방식을 쓰지 않는 이유: secret/ 이 한 번 새면
 # 되돌릴 수 없습니다. 빠뜨려서 못 올라가는 편이 훨씬 낫습니다.
 for f in *.html *.css *.js *.svg *.txt *.webmanifest; do

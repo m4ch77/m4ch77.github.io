@@ -1,0 +1,16 @@
+{
+  "name": "m4ch77-sync-cron",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Notion 동기화를 5분마다 깨우는 Cloudflare Worker. GitHub 의 schedule 이 지켜지지 않아서 시계만 옮겨온 것입니다.",
+  "//": "wrangler 는 메이저 버전마다 명령 문법이 바뀝니다. 그래서 고정해 둡니다.",
+  "scripts": {
+    "secret": "wrangler secret put GH_TOKEN",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "try": "wrangler dev --test-scheduled"
+  },
+  "devDependencies": {
+    "wrangler": "4.119.0"
+  }
+}

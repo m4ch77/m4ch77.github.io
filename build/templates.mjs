@@ -452,9 +452,14 @@ ${items}
 
 /* ══ 허브(index.html) 캐러셀에 꽂아 넣을 카드 ═══════════════
    index.html 의 build:posts 표시 사이만 바꿉니다. */
+/* 허브 캐러셀에 걸 글 수. 마지막에 목록으로 가는 칸이 하나 붙으니
+   화면에 보이는 칸은 이 수 + 1 입니다. 캐러셀이 길어지면 훑는 재미가
+   아니라 일이 되므로 짧게 둡니다. 전체는 /writing 에 있습니다. */
+const HUB_POSTS = 5;
+
 export function hubCards(posts) {
   const cards = posts
-    .slice(0, 6)
+    .slice(0, HUB_POSTS)
     .map(
       (p) => `
           <li class="bcard" data-reveal="slide">
@@ -473,9 +478,8 @@ export function hubCards(posts) {
     )
     .join("");
 
-  /* 마지막 칸은 목록으로 가는 문입니다. 앞의 여섯 칸이 최신 글,
-     일곱 번째 칸이 /writing 입니다. 칸 수를 일정하게 두려고 글은 6편으로
-     자릅니다 — 글이 늘어도 캐러셀 길이는 그대로입니다.
+  /* 마지막 칸은 목록으로 가는 문입니다. 글이 늘어도 캐러셀 길이는
+     그대로입니다.
 
      (한 번 뺐다가 되돌렸습니다. 제목 밑에 있던 작은 링크를 빼는 것이
      본래 요청이었고, 그 링크는 이미 없습니다.) */

@@ -1,0 +1,24 @@
+# Notion 동기화 타이머
+#
+#   cd cron
+#   npx wrangler secret put GH_TOKEN     ← 프롬프트에 붙여넣기
+#   npx wrangler deploy
+#
+# 확인
+#   npx wrangler tail                    실행될 때마다 로그가 흐릅니다
+
+name = "m4ch77-sync-cron"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+
+# 바깥에서 부를 수 있는 주소를 만들지 않습니다.
+# 이 Worker 에는 fetch 핸들러가 없고, 여기에 GitHub 토큰이 있습니다.
+workers_dev = false
+
+# 시계. Cloudflare 의 최소 간격은 1분이고, 지켜집니다.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# 결과를 로그로 봐야 하니 관측을 켭니다.
+[observability]
+enabled = true
