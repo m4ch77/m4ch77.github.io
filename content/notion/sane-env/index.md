@@ -2,7 +2,7 @@
 title: "sane-env"
 date: 2026-11-19
 tags: ["Wargame"]
-updated: 2026-11-19
+updated: 2026-11-27
 # 이 파일은 Notion 에서 만들어졌습니다. 직접 고치면 다음 동기화에 덮입니다.
 # 원본: https://app.notion.com/p/sane-env-41d830f66e3d80e9b6bcc737bca7677a
 ---
@@ -16,7 +16,7 @@ switch case 1번인 `1. set environment variable` 코드 구조는 name, value�
 크기가 14인 malloc을 생성하고, confstr() 함수로 _CS_PATH를 불러와 malloc에 저장하고,  그 값을 PATH에 setenv() 함수로 설정하여 system() 함수로 “cat \~/flag” 명령어를 실행시킨다.
 # Vuln
 setenv() 함수의 3번째 인자 값은 overwrite 여부로, 1은 이미 데이터가 있으면 덮어 씌우며, 0은 기존 데이터가 있으면 유지한다. 옵션 1의 setenv() 함수로 원하는 환경 변수의 기존 값이 존재해도 수정할 수 있는 권한을 가진다.
-system() 함수가 cat \~/flag 명령어를 실행하며 2개의 환경 변수가 쓰이는데, cat은 system() 함수가 절대 경로로 쓰이지 않은 cat 명령어를 찾기 위해 저장되어 있는 경로, PATH 환경 변수를 활용하여 파일을 찾아 수행하고, \~/flag에서는 \~가 HOME 환경 변수를 사용한다.
+system() 함수가 cat \~/flag 명령어를 실행하며 2개의 환경 변수가 쓰이는데, cat은 system() 함수가 절대 경로로 쓰이지 않은 cat 명령어를 찾기 위해 저장되어 있는 경로인 PATH 환경 변수를 활용하여 파일을 찾아 수행하고, \~/flag에서는 \~가 HOME 환경 변수를 사용한다.
 PATH는 system() 함수 실행 전마다 confstr() 함수로 프로세스 밖의 시스템 설정 값을 가져와 초기화 하기에 PATH를 수정하고 실행해도 기본 값으로 유지된다.
 # Exploit
 ```assembly
