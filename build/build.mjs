@@ -27,6 +27,7 @@ import {
 } from "./markdown.mjs";
 import { feedPage, postPage, rss, hubCards } from "./templates.mjs";
 import * as notion from "./notion.mjs";
+import { readImageSizes } from "./images.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -142,6 +143,9 @@ async function loadPosts() {
     const norm = notion.normalize(fm.content, {
       hasFrontmatter,
       demote: src.origin === "Notion",
+      // content/notion/ 은 API 로 받은 글입니다. 블록 사이에 빈 줄이 없어서
+      // 여기서 나눠 줘야 Enter 로 나눈 문단이 문단으로 나옵니다.
+      blocks: src.origin === "Notion",
     });
 
     // 프런트매터 > Notion 속성 순으로 합칩니다.
@@ -302,7 +306,7 @@ async function main() {
   say("▸ 본문 변환");
   let mathCount = 0;
   for (const p of posts) {
-    const out = render(md, p.source);
+    const out = render(md, p.source, { imageSizes: await readImageSizes(p.assetDir) });
     p.html = out.html;
     p.toc = out.toc;
     p.hasMath = out.hasMath;

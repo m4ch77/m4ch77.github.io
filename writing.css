@@ -426,6 +426,28 @@
   border-radius: var(--radius-lg);
 }
 
+/* 혼자 선 그림. 빌드가 width/height 를 "찍었던 화면에서의 크기" 로
+   넣어 두므로, 본문보다 작은 그림은 그 크기 그대로 가운데에 섭니다
+   (Notion 의 기본 정렬과 같습니다). 큰 그림은 본문 폭까지만 줄어듭니다. */
+.wr-fig {
+  margin-inline: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.wr-fig img { margin-inline: auto; }
+.wr-fig figcaption {
+  margin-top: 0.6em;
+  font-size: 0.82em;
+  line-height: 1.5;
+  color: var(--dim);
+  text-align: center;
+}
+
+/* Notion 의 빈 블록 — 글쓴이가 일부러 띄운 한 줄입니다. 높이는 0 이고
+   앞뒤 문단 간격이 한 번 더 들어가서 그만큼 벌어집니다. */
+.wr-prose .nt-gap { height: 0; }
+
 /* 인라인 코드 */
 .wr-prose :not(pre) > code {
   font-family: var(--font-mono);
@@ -461,8 +483,47 @@
   display: block;
   width: fit-content;
   min-width: 100%;
+  tab-size: 4;
 }
-.wr-prose pre .line { display: block; min-height: 1.7em; }
+/* .line 에 display: block 을 걸지 않습니다. Shiki 는 줄과 줄 사이에
+   실제 줄바꿈 문자를 남기는데, 줄을 블록으로 세우면 그 줄바꿈이 한 줄을
+   더 차지해서 모든 줄 사이가 두 배로 벌어집니다. 복사할 때도 빈 줄이
+   끼어 들어갔습니다. 줄바꿈은 <pre> 가 이미 지켜 줍니다. */
+
+/* 코드 블록 껍데기 — 복사 버튼이 가로 스크롤에 밀리지 않게 바깥에 둡니다. */
+.wr-code {
+  position: relative;
+  margin-block: 1.6em;
+}
+.wr-prose .wr-code pre { margin-block: 0; }
+
+.wr-copy {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  padding: 0.3em 0.7em;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  background: var(--card);
+  border: 1px solid var(--line2);
+  border-radius: 99px;
+  cursor: pointer;
+  user-select: none;
+  opacity: 0;
+  transition: opacity var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.wr-code:hover .wr-copy,
+.wr-copy:focus-visible,
+.wr-copy.is-done { opacity: 1; }
+.wr-copy:hover { color: var(--fg); border-color: var(--accent); }
+.wr-copy.is-done { color: var(--accent); border-color: var(--accent); }
+@media print { .wr-copy { display: none; } }
+/* 호버가 없는 기기(휴대폰)에서는 항상 보입니다. */
+@media (hover: none) {
+  .wr-copy { opacity: 1; }
+}
 
 /* 테마에 따라 어느 변수를 볼지 정합니다 */
 [data-theme="dark"] .shiki,

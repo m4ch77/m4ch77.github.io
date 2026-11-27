@@ -108,13 +108,93 @@ export async function createRenderer(langs = []) {
     return defaultLinkOpen(tokens, idx, options, env, self);
   };
 
-  /* 이미지는 지연 로딩하고 크기를 비워두지 않습니다. */
-  const defaultImage = md.renderer.rules.image;
+  /* ── 그림 ────────────────────────────────────────────
+     혼자 한 문단을 차지한 그림은 <figure> 로 세우고, 설명(Notion 의
+     캡션 = 마크다운의 alt)이 있으면 아래에 보여줍니다. Notion 에서
+     캡션은 화면에 보이는 글이라, alt 에만 두면 사라집니다.
+
+     크기는 두 가지로 정합니다.
+       · 기본: 그림 파일에서 읽은 "찍었던 화면에서의 크기" (images.mjs).
+         본문 폭보다 크면 본문 폭까지만 줄어듭니다.
+       · 직접: 캡션 끝에 {50%} 나 {400px} 를 적으면 그 크기로 그립니다.
+         Notion 에서 손으로 줄인 크기는 API 가 알려주지 않아서, 꼭
+         맞춰야 하는 그림은 이렇게 적어 둡니다. 이 표기는 화면에서는
+         지워집니다. */
+  md.core.ruler.push("lone_image_figure", (state) => {
+    const t = state.tokens;
+    for (let i = 1; i < t.length - 1; i++) {
+      if (t[i].type !== "inline") continue;
+      if (t[i - 1].type !== "paragraph_open" || t[i + 1].type !== "paragraph_close") continue;
+      if (t[i - 1].hidden) continue; // 촘촘한 목록 안의 문단은 건드리지 않습니다
+      const kids = (t[i].children || []).filter(
+        (c) => !(c.type === "text" && !c.content.trim()) && c.type !== "softbreak",
+      );
+      if (kids.length !== 1 || kids[0].type !== "image") continue;
+      t[i - 1].meta = { ...(t[i - 1].meta || {}), figure: true };
+      t[i + 1].meta = { ...(t[i + 1].meta || {}), figure: true };
+      kids[0].meta = { ...(kids[0].meta || {}), figure: true };
+    }
+  });
+
+  const defaultParaOpen =
+    md.renderer.rules.paragraph_open ||
+    ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+  const defaultParaClose =
+    md.renderer.rules.paragraph_close ||
+    ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+  md.renderer.rules.paragraph_open = (tokens, idx, options, env, self) =>
+    tokens[idx].meta?.figure ? '<figure class="wr-fig">' : defaultParaOpen(tokens, idx, options, env, self);
+  md.renderer.rules.paragraph_close = (tokens, idx, options, env, self) =>
+    tokens[idx].meta?.figure ? "</figure>\n" : defaultParaClose(tokens, idx, options, env, self);
+
+  const SIZE_HINT = /\s*\{\s*(\d{1,4})\s*(%|px)?\s*\}\s*$/i;
+
   md.renderer.rules.image = (tokens, idx, options, env, self) => {
-    tokens[idx].attrSet("loading", "lazy");
-    tokens[idx].attrSet("decoding", "async");
-    return defaultImage(tokens, idx, options, env, self);
+    const tok = tokens[idx];
+    const src = tok.attrGet("src") || "";
+    const title = tok.attrGet("title");
+
+    let caption = self.renderInlineAsText(tok.children || [], options, env).trim();
+    let want = null;
+    caption = caption.replace(SIZE_HINT, (_m, n, unit) => {
+      want = { n: Number(n), unit: unit === "%" ? "%" : "px" };
+      return "";
+    }).trim();
+    if (want && want.unit === "%" && (want.n < 1 || want.n > 100)) want = null;
+
+    let key = src;
+    try { key = decodeURIComponent(src); } catch {}
+    const natural = env?.imageSizes?.[key] || null;
+
+    const attrs = [`src="${escapeHtml(src)}"`, `alt="${escapeHtml(caption)}"`];
+    if (title) attrs.push(`title="${escapeHtml(title)}"`);
+
+    if (want?.unit === "px") {
+      // 가로를 정하면 세로는 원래 비율로 맞춥니다.
+      attrs.push(`width="${want.n}"`);
+      if (natural) attrs.push(`height="${Math.round((want.n * natural.h) / natural.w)}"`);
+    } else if (natural) {
+      // 크기를 적어 두면 그림이 내려오기 전에도 자리가 잡혀 화면이 밀리지 않습니다.
+      attrs.push(`width="${natural.w}"`, `height="${natural.h}"`);
+    }
+    if (want?.unit === "%") attrs.push(`style="width:${want.n}%"`);
+
+    attrs.push('loading="lazy"', 'decoding="async"');
+    const img = `<img ${attrs.join(" ")}>`;
+
+    if (tok.meta?.figure && caption) {
+      return `${img}<figcaption>${escapeHtml(caption)}</figcaption>`;
+    }
+    return img;
   };
+
+  /* ── 코드 블록 ───────────────────────────────────────
+     복사 버튼을 달 자리를 만듭니다. 버튼은 main.js 가 붙입니다.
+     <pre> 는 가로로 스크롤되므로 버튼을 그 안에 두면 같이 밀려납니다.
+     그래서 바깥에 한 겹 감쌉니다. */
+  const defaultFence = md.renderer.rules.fence;
+  md.renderer.rules.fence = (tokens, idx, options, env, self) =>
+    `<div class="wr-code">${defaultFence(tokens, idx, options, env, self).trimEnd()}</div>\n`;
 
   /* 표를 감싸서 좁은 화면에서 가로로만 스크롤되게 합니다. */
   md.renderer.rules.table_open = () => '<div class="tbl-wrap"><table>';
@@ -124,8 +204,8 @@ export async function createRenderer(langs = []) {
 }
 
 /* 본문을 렌더링하고, 목차와 수식 사용 여부를 함께 돌려줍니다. */
-export function render(md, source) {
-  const env = {};
+export function render(md, source, { imageSizes = {} } = {}) {
+  const env = { imageSizes };
   const tokens = md.parse(source, env);
   const html = md.renderer.render(tokens, md.options, env);
 
@@ -183,6 +263,8 @@ export function excerptFrom(source, limit = 160) {
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/^#{1,6}\s+.*$/gm, "")
+    // <br> · 빈 블록 같은 태그가 요약에 글자로 남지 않게 걷어 냅니다.
+    .replace(/<[^>\n]+>/g, " ")
     .replace(/[*_`>#|-]/g, "")
     .replace(/\s+/g, " ")
     .trim();

@@ -44,6 +44,98 @@ function protectCode(src) {
   };
 }
 
+/* ── 0. 블록 나누기 (Notion API 글만) ────────────────────
+   Notion API 마크다운(v1)은 블록 사이에 **줄바꿈 하나만** 둡니다.
+   공식 문서에 "Plain empty lines are stripped out" 이라고 되어 있습니다.
+   표준 마크다운에서 줄바꿈 하나는 "같은 문단" 이라서, 그대로 넘기면
+   Enter 로 나눈 문단들이 전부 한 문단으로 붙습니다. 그림도 앞뒤 글과
+   한 <p> 안에 들어갑니다.
+
+   Notion 에서 Shift+Enter 로 넣은 줄바꿈은 줄바꿈 문자가 아니라 <br> 로
+   옵니다. 그래서 여기서 남은 줄바꿈은 모두 "블록이 바뀌는 자리" 이고,
+   빈 줄로 바꿔 주면 Notion 과 같은 구조가 됩니다.
+
+     Enter        → 새 블록  → 빈 줄    → 새 문단
+     Shift+Enter  → <br>     → 그대로   → 같은 문단 안 줄바꿈
+
+   빈 줄을 넣지 않는 자리
+     · 이어지는 목록 항목과 그 아래 들여쓴 줄 — 넣으면 항목마다 문단으로
+       벌어집니다(느슨한 목록).
+     · 파이프 표의 행, <table> … </table> 안, $$ … $$ 안
+
+   목록이 아닌 블록 아래 들여쓴 줄(콜아웃·토글의 자식)은 들여쓰기를
+   걷어 냅니다. 빈 줄 뒤에 탭으로 시작하는 줄은 코드 블록으로 읽히기
+   때문입니다.
+
+   코드 펜스는 이 함수가 보기 전에 자리표 한 줄로 바뀌어 있습니다
+   (protectCode). 코드 안의 줄바꿈은 건드리지 않습니다. */
+const LIST_ITEM = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+/;
+const TABLE_ROW = /^[ \t]*\|/;
+const EMPTY_BLOCK = /^<empty-block\s*\/?>(?:\s*<\/empty-block>)?$/i;
+
+/* Notion 의 빈 블록(아무것도 없는 줄)입니다. 글쓴이가 일부러 띄운
+   자리라서, 문단 간격과 별개로 한 줄만큼 띄웁니다. */
+export const GAP = '<div class="nt-gap" aria-hidden="true"></div>';
+
+export function separateBlocks(src) {
+  const out = [];
+  let inMath = false;
+  let inTable = false;
+  let inList = false;
+  let prevRow = false;
+
+  const breakBlock = () => {
+    if (out.length && out[out.length - 1] !== "") out.push("");
+  };
+
+  for (const raw of src.split("\n")) {
+    let line = raw;
+    const bare = line.trim();
+
+    if (!bare) {
+      breakBlock();
+      inList = false;
+      prevRow = false;
+      continue;
+    }
+
+    if (inMath) {
+      out.push(line);
+      if (bare === "$$") inMath = false;
+      continue;
+    }
+    if (inTable) {
+      out.push(line);
+      if (/<\/table>/i.test(line)) inTable = false;
+      continue;
+    }
+
+    const isItem = LIST_ITEM.test(line);
+    const indented = /^(?:\t| {2,})/.test(line);
+    const isRow = TABLE_ROW.test(line);
+
+    const join = (isRow && prevRow) || (inList && (isItem || indented));
+
+    if (!join) {
+      if (indented) line = line.replace(/^[ \t]+/, "");
+      if (EMPTY_BLOCK.test(bare)) line = GAP;
+      breakBlock();
+    }
+    out.push(line);
+
+    inList = isItem || (inList && indented);
+    prevRow = isRow;
+    if (bare === "$$") inMath = true;
+    if (/^<table\b/i.test(bare) && !/<\/table>/i.test(bare)) inTable = true;
+  }
+
+  // 글 맨 앞뒤의 빈 블록은 아무것도 띄우지 않으므로 지웁니다.
+  while (out.length && (out[0] === "" || out[0] === GAP)) out.shift();
+  while (out.length && (out[out.length - 1] === "" || out[out.length - 1] === GAP)) out.pop();
+
+  return out.join("\n");
+}
+
 /* ── 1. $$ 수식 정규화 ──────────────────────────────────── */
 export function normalizeMath(src) {
   const lines = src.split("\n");
@@ -364,9 +456,13 @@ function leftoverTags(text) {
 /* ── 전체 파이프라인 ─────────────────────────────────────
    프런트매터(---)를 이미 쓴 글은 그대로 존중하고, 없으면 Notion 식으로
    제목과 속성을 뽑습니다. */
-export function normalize(source, { hasFrontmatter, demote = false }) {
+export function normalize(source, { hasFrontmatter, demote = false, blocks = false }) {
   const guard = protectCode(source);
   let text = guard.text;
+
+  // API 에서 받은 글만 블록을 나눕니다. 손글과 Notion UI 내보내기는
+  // 이미 빈 줄로 문단을 나누고 있습니다.
+  if (blocks) text = separateBlocks(text);
 
   text = normalizeApiBlocks(text);
   text = normalizeMath(text);

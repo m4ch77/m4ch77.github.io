@@ -20,6 +20,8 @@
      18 잡동사니 (시계 · 연도 · 위로)
      19 글 목록 태그 필터        (/writing)
      20 글 목차 스크롤 스파이     (/writing/<이름>)
+     21 조회수
+     22 코드 복사 버튼            (/writing/<이름>)
 
    06d 에 있던 "스크롤 속도에 따라 기우는 글자"(data-flow)는 없앴습니다.
    섹션별 등장 모션이 그 자리를 대신하고, 전부 CSS 입니다.
@@ -2732,6 +2734,73 @@
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     onScroll();
+  })();
+
+  /* ══ 22 코드 복사 ═══════════════════════════════════════
+     빌드가 코드 블록을 .wr-code 로 감싸 둡니다. 여기서 버튼만 붙입니다.
+     JS 가 없으면 버튼도 없고, 손으로 선택해 복사하면 됩니다.
+
+     복사하는 것은 <code> 의 textContent 입니다. 강조용 span 은 빠지고
+     원래 코드의 글자와 줄바꿈만 남습니다. */
+  (function codeCopy() {
+    var blocks = $$(".wr-code");
+    if (!blocks.length) return;
+
+    function fallbackCopy(text) {
+      // clipboard API 가 막힌 환경(오래된 브라우저, http)을 위한 길입니다.
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+      return ok ? Promise.resolve() : Promise.reject(new Error("copy failed"));
+    }
+
+    function copy(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).catch(function () { return fallbackCopy(text); });
+      }
+      return fallbackCopy(text);
+    }
+
+    var LABEL = t("복사", "Copy");
+    var DONE = t("복사됨", "Copied");
+    var FAIL = t("실패", "Failed");
+
+    blocks.forEach(function (wrap) {
+      var code = $("pre code", wrap) || $("pre", wrap);
+      if (!code) return;
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "wr-copy";
+      btn.textContent = LABEL;
+      btn.setAttribute("aria-label", t("코드 복사", "Copy code"));
+      wrap.appendChild(btn);
+
+      var timer = null;
+      btn.addEventListener("click", function () {
+        // 끝의 줄바꿈 하나는 떼어 붙여 넣을 때 빈 줄이 생기지 않게 합니다.
+        var text = (code.textContent || "").replace(/\n$/, "");
+        copy(text).then(function () {
+          btn.textContent = DONE;
+          btn.classList.add("is-done");
+        }, function () {
+          btn.textContent = FAIL;
+        }).then(function () {
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            btn.textContent = LABEL;
+            btn.classList.remove("is-done");
+          }, 1600);
+        });
+      });
+    });
   })();
 
   /* ══ 21 조회수 ══════════════════════════════════════════
