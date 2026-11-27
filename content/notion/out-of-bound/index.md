@@ -1,8 +1,8 @@
 ---
-title: "out_of_bound 문제풀이"
+title: "out_of_bound"
 date: 2026-11-17
 tags: ["Wargame"]
-updated: 2026-11-19
+updated: 2026-11-27
 # 이 파일은 Notion 에서 만들어졌습니다. 직접 고치면 다음 동기화에 덮입니다.
 # 원본: https://app.notion.com/p/out_of_bound-410830f66e3d80c390f4f5d702391a37
 ---
